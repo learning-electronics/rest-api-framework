@@ -1,0 +1,32 @@
+from rest_framework import serializers
+
+from account.models import Account
+
+class RegistrationSerialiazer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = [  "email",
+                    "username",
+                    "first_name",
+                    "last_name",
+                    "birth_date",
+                    "password",
+                    ]
+        extra_kwargs = { 
+                    'password': {"write_only":True},
+        }
+
+    def save(self):
+        account = Account(
+                    email=self.validated_data["email"],
+                    username=self.validated_data["username"],
+                    first_name=self.validated_data["first_name"],
+                    last_name=self.validated_data["last_name"],
+                    birth_date=self.validated_data["birth_date"],
+                    )
+        
+        password = self.validated_data['password']
+        account.set_password(password)
+        account.save()
+        return account
+
