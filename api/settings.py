@@ -87,6 +87,9 @@ CORS_ORIGIN_ALLOW_ALL = True
 AUTH_USER_MODEL = 'account.Account'
 # TOKEN_EXPIRED_AFTER_SECONDS = 7200
 
+DATE_INPUT_FORMATS = ['%d-%m-%Y']
+DATE_FORMAT = '%d-%m-%y'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -136,7 +139,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 

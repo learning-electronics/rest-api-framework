@@ -30,22 +30,26 @@ def registration_view(request):
         account_serializer = RegistrationSerialiazer(data=JSONParser().parse(request))  # Handles received data and instanciated user
         if account_serializer.is_valid():                                               # Checks if serializer is valid
             account = account_serializer.save()                                         # Saves new user
-            data= True
+            data['v']=True
+            data['m']=None
             """ data["token"] = Token.objects.get_or_create(user=account)[0].key
             data["expired"], data["token"] = token_expire_handler(data["token"]) """ 
         else:
-            data = account_serializer.errors
+            data['v']=False
+            data['m']= account_serializer.errors
 
         return JsonResponse(data, safe=False)
 
     except IntegrityError as e:
             account=Account.objects.get(username='')
             account.delete()
-            raise ValidationError({"400": f'{str(e)}'})
-
+            data['v']= False
+            data['m']= ValidationError(str(e))
+            return JsonResponse(False, safe=False)
     except KeyError as e:
-        print(e)
-        raise ValidationError({"400": f'Field {str(e)} missing'})
+            data['v']= False
+            data['m']= ValidationError(str(e))
+            return JsonResponse(False, safe=False)
 
 # Only works with GET method
 # Everyone can acess this view
@@ -59,27 +63,31 @@ def registration_view(request):
 def login_view(request):
     login_data = JSONParser().parse(request)                        # Handles received data
     try:
-        account = Account.objects.get(email=login_data["email"])    # Gets account of user with the given email
+        account = Account.objects.get(email=login_data['email'])    # Gets account of user with the given email
     except BaseException as e:
-        return JsonResponse({"message":"false","email":"","token":""},safe=False)
+        return JsonResponse({'v':False,'m':"Doesnt exist"},safe=False)
 
     if not account.check_password(login_data["password"]):          # Checks if the given password is correct
-        return JsonResponse({"message":"false","email":"","token":""},safe=False)
+        return JsonResponse({'v':False,'m':"Incorrect Credentials"},safe=False)
 
     if account:
+        data={}
         if account.is_active:
-            data={}
             login(request, account)                                 # Logs in user
-            data["message"] = True
-            data["email"] = account.email
-            data["token"] = Token.objects.get_or_create(user=account)[0].key    # Creates or gets token for that specific user
+            data['v'] = True
+            data['m'] = None
+            data['t'] = Token.objects.get_or_create(user=account)[0].key    # Creates or gets token for that specific user
             #data["expired"], data["token"] = token_expire_handler(data["token"]) 
             return JsonResponse(data, safe=False)
         else:
-            raise ValidationError("Account not active")
+            data['v'] = False
+            data['m'] = "Not active"
+            return JsonResponse(data, safe=False) 
 
     else:
-        raise ValidationError("Account doesnt exist")
+        data['v'] = False
+        data['m'] = "Doesnt exist"
+        return JsonResponse(data, safe=False)
 
 # Only works with GET method
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -92,7 +100,7 @@ def logout_view(request):
     request.user.auth_token.delete()        # Deletes user's auth_token
     logout(request)                         # Logs out user
 
-    return JsonResponse(True, safe=False)
+    return JsonResponse({'v':True, 'm':None}, safe=False)
 
 # Only works with GET method
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -109,22 +117,22 @@ def change_password(request):
     try:
         account = Account.objects.get(email=request.user)   # Gets account of user that sent the request (trough generated_auth_token)
     except BaseException as e:
-        raise ValidationError({"400": f'{str(e)}'})
+        return JsonResponse({'v':False,'m':ValidationError(str(e))},safe=False)
     
-    if not account.check_password(packet["old_pwd"]):       # Checks if the current password is correct
-        return JsonResponse({"message": "Incorrect Credentials"}, safe=False)
+    if not account.check_password(packet['old_pwd']):       # Checks if the current password is correct
+        return JsonResponse({'v':False, 'm':"Incorrect Credentials"}, safe=False)
 
     if account.is_active:
-        account.set_password(packet["new_pwd"])     # Sets new password as current password
+        account.set_password(packet['new_pwd'])     # Sets new password as current password
         account.save()                              # Saves changes
         login(request,account)                      # Logs user again
         data={}
-        data["message"] = True
-        data["email"] = account.email
-        data["token"] = Token.objects.get_or_create(user=account)[0].key    # Creates or gets token for that specific user
+        data['v'] = True
+        data['m'] = None
+        data['t'] = Token.objects.get_or_create(user=account)[0].key    # Creates or gets token for that specific user
         
         return JsonResponse(data, safe=False)
     else:
-        raise ValidationError("Account not active")
+        return JsonResponse({'v':False,'m':"Not Active"},safe=False)
 
     
