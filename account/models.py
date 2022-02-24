@@ -53,6 +53,7 @@ class AccountManager(BaseUserManager):
 
 # Customized User Model
 class Account(AbstractBaseUser):
+    id = models.AutoField(verbose_name="id", primary_key=True)
     email       = models.EmailField(verbose_name="email", max_length=120, unique=True)
     first_name  = models.CharField(verbose_name="first name", max_length=45)
     last_name   = models.CharField(verbose_name="last name", max_length=45)

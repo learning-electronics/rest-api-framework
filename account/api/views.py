@@ -134,7 +134,7 @@ def change_password(request):
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Receives user token and gets user info
-# If sucessfull returns: { "v": True, "m": None, "info": {"fname", "lname", "email", "bday", "joined" }}
+# If sucessfull returns: { "v": True, "m": None, "info": {"first_name", "last_name", "email", "birth_date", "joined" }}
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["GET",])
@@ -145,16 +145,16 @@ def profile_view(request):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
-    info={}
-    info['fname']=account.first_name
-    info['lname']=account.last_name
-    info['email']=account.email
-    info['bday'] =account.birth_date
-    info['joined']=account.date_joined
-    return JsonResponse({ 'v': True, 'm': None, 'info':info }, safe=False)
+    info = {}
+    info['first_name'] = account.first_name
+    info['last_name'] = account.last_name
+    info['email'] = account.email
+    info['birth_date'] = account.birth_date
+    info['joined'] = account.date_joined
+    return JsonResponse({ 'v': True, 'm': None, 'info': info }, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Receives JSON with keyswords "pwd", "email" that can't be null
+# Receives JSON with keyswords "password", "email" that can't be null
 # If sucessfull makes the user inactive and returns: { "v": True, "m": None }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -167,15 +167,18 @@ def delete_view(request):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
-    if not account.check_password(packet['pwd']) or account.email!=packet['email']:       # Checks if the current password is correct
+    if not account.check_password(packet['password']) or account.email != packet['email']:       # Checks if the current password is correct
         return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
 
-    account.is_active=False
+    account.is_active = False
+    account.email = str(account.id) + "@deleted.com"
+    account.first_name = ""
+    account.last_name = ""
     account.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Receives JSON with keyswords "email", "fname", "lname", "bday" that can't be null
+# Receives JSON with keyswords "email", "first_name", "last_name", "birth_date" that can't be null
 # If sucessfull updates user data and returns: { "v": True, "m": None }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -188,9 +191,9 @@ def update_profile(request):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
-    account.email=packet['email']
-    account.first_name=packet['fname']
-    account.last_name=packet['lname']
-    account.birth_date=packet['bday']
+    account.email = packet['email']
+    account.first_name = packet['first_name']
+    account.last_name  = packet['last_name']
+    account.birth_date = packet['birth_date']
     account.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
