@@ -108,7 +108,7 @@ def logout_view(request):
 # If unsuccessful nothing happens and returns: "Incorrect Credentials" 
 # If account is inactive returns: "Account not active" 
 @csrf_exempt
-@api_view(["PUT", ])
+@api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 def change_password(request):
     packet = JSONParser().parse(request)                    # Handles received data
