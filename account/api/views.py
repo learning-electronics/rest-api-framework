@@ -103,10 +103,9 @@ def logout_view(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Receives JSON with keyswords "old_pwd", "new_pwd" that noone can be null
-# If sucessfull it changes user password and returns: { "message":True, "email": user's_email, "token": generated_auth_token }
-# If unsuccessful nothing happens and returns: "Incorrect Credentials" 
-# If account is inactive returns: "Account not active" 
+# Receives JSON with keyswords "old_pwd", "new_pwd" that can't be null
+# If sucessfull it changes user password and returns: { "v": True, "m": None, "token": generated_auth_token }
+# If unsuccessful nothing happens and returns: { "v": True, "m": Error message } 
 @csrf_exempt
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
@@ -131,4 +130,4 @@ def change_password(request):
         
         return JsonResponse(data, safe=False)
     else:
-        return JsonResponse({'v': False,'m': "Not Active" }, safe=False)
+        return JsonResponse({ 'v': False, 'm': "Not Active" }, safe=False)
