@@ -26,7 +26,7 @@ class AccountManager(BaseUserManager):
         user.save(using=self._db)       # saves user
         return user
 
-    def create_superuser(self, email, password, first_name="PRIMEIRO", last_name="ULTIMO", birth_date="25-02-2001"):
+    def create_superuser(self, email, password, first_name="PRIMEIRO", last_name="ULTIMO", birth_date="2001-02-25"):
         if not email:
             raise ValueError("User must have an email address")
         if not first_name or not last_name:
