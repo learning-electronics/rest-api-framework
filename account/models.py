@@ -1,7 +1,9 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-#Manages the creations of users (normal users and superusers)
+
+# Manages the creations of users (normal users and superusers)
 class AccountManager(BaseUserManager):
     def create_user(self, email, first_name, last_name, birth_date, password):
         if not email:
@@ -20,8 +22,8 @@ class AccountManager(BaseUserManager):
                 birth_date  = birth_date,
                 password    = password,
         )
-        user.set_password(password)     #sets password
-        user.save(using=self._db)       #saves user
+        user.set_password(password)     # sets password
+        user.save(using=self._db)       # saves user
         return user
 
     def create_superuser(self, email, password, first_name="PRIMEIRO", last_name="ULTIMO", birth_date="25-02-2001"):
@@ -55,7 +57,7 @@ class Account(AbstractBaseUser):
     first_name  = models.CharField(verbose_name="first name", max_length=45)
     last_name   = models.CharField(verbose_name="last name", max_length=45)
     birth_date  = models.DateField(verbose_name="birth date")
-    date_joined = models.DateTimeField(verbose_name="date joined", auto_now_add=True)
+    date_joined = models.DateField(verbose_name="date joined", auto_now=True)
     last_login  = models.DateTimeField(verbose_name="last login", auto_now=True)
     is_admin    = models.BooleanField(default=False)
     is_staff    = models.BooleanField(default=False)
