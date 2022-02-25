@@ -205,6 +205,10 @@ def update_profile(request):
     account.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
+# Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Receives a form-data with key "avatar" that can't be null
+# If sucessfull updates user data and returns: { "v": True, "m": None }
+# If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["POST",])
 @permission_classes([IsAuthenticated]) 
