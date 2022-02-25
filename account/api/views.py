@@ -12,6 +12,7 @@ from rest_framework.authtoken.models import Token
 from account.api.serializers import RegistrationSerialiazer
 from account.models import Account
 from account.api.utils import *
+from django.core.files.storage import default_storage
 
 
 # Everyone can acess this view
@@ -151,6 +152,12 @@ def profile_view(request):
     info['email'] = account.email
     info['birth_date'] = account.birth_date
     info['joined'] = account.date_joined
+
+    try:
+        info['avatar'] = account.avatar.url
+    except BaseException as e:
+        info['avatar'] = None
+
     return JsonResponse({ 'v': True, 'm': None, 'info': info }, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -195,5 +202,27 @@ def update_profile(request):
     account.first_name = packet['first_name']
     account.last_name  = packet['last_name']
     account.birth_date = packet['birth_date']
+    account.save()
+    return JsonResponse({ 'v': True, 'm': None}, safe=False)
+
+@csrf_exempt
+@api_view(["POST",])
+@permission_classes([IsAuthenticated]) 
+def upload_avatar(request):
+    try:
+        account = Account.objects.get(email=request.user)   # Gets account of user that sent the request (trough generated_auth_token)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
+
+    file = request.FILES['avatar']
+    extension = file.name.split('.')[-1]
+    file_name = "users/" + str(account.id) + "." + extension
+
+    if default_storage.exists(file_name):
+        default_storage.delete(file_name)
+
+    file_path = default_storage.save(file_name, file)
+    account.avatar = file_path
+
     account.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)

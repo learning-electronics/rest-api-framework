@@ -1,4 +1,6 @@
 from django.urls import path
+
+
 from account.api.views import(
     delete_view,
     login_view,
@@ -7,6 +9,7 @@ from account.api.views import(
     registration_view,
     change_password,
     update_profile,
+    upload_avatar,
 )
 
 app_name = "account"
@@ -19,4 +22,5 @@ urlpatterns = [
     path("user", profile_view, name="get_profile"),
     path("delete", delete_view, name="delte_view"),
     path("update_user", update_profile, name="update_profile"),
-]
+    path("upload_avatar", upload_avatar, name="upload_avatar"),
+] 

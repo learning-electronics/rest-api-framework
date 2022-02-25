@@ -1,7 +1,14 @@
-from datetime import datetime
+from datetime import timezone
+import os
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
+
+def upload_to(instance, filename):
+    now = timezone.now()
+    base, extension = os.path.splitext(filename.lower())
+    milliseconds = now.microsecond // 1000
+    return f"users/{instance.pk}/{now:%Y%m%d%H%M%S}{milliseconds}{extension}"
 
 # Manages the creations of users (normal users and superusers)
 class AccountManager(BaseUserManager):
@@ -48,6 +55,7 @@ class AccountManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_active = True
+        user.avatar = None
         user.save(using=self._db)
         return user
 
@@ -60,6 +68,7 @@ class Account(AbstractBaseUser):
     birth_date  = models.DateField(verbose_name="birth date")
     date_joined = models.DateField(verbose_name="date joined", auto_now=True)
     last_login  = models.DateTimeField(verbose_name="last login", auto_now=True)
+    avatar = models.ImageField(verbose_name="avatar", upload_to=upload_to, null=True, blank=True, max_length=1024)
     is_admin    = models.BooleanField(default=False)
     is_staff    = models.BooleanField(default=False)
     is_superuser= models.BooleanField(default=False)
