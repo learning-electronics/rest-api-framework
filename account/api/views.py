@@ -11,7 +11,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site  
-from django.utils.encoding import force_bytes  
+from django.utils.encoding import force_bytes, force_str 
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode  
 from .tokens import account_activation_token  
 from django.contrib.auth.models import User  
@@ -39,29 +39,25 @@ def registration_view(request):
         account_serializer = RegistrationSerialiazer(data=JSONParser().parse(request))  # Handles received data and instanciated user
         if account_serializer.is_valid():                                               # Checks if serializer is valid
             account = account_serializer.save()                                         # Saves new user
-
+            
             data['v'] = True
             data['m'] = None
             # data["token"] = Token.objects.get_or_create(user=account)[0].key
             # data["expired"], data["token"] = token_expire_handler(data["token"])
 
-            """
-            account.is_active = False
-            account.save()
             current_site = get_current_site(request)  
-            mail_subject = 'Activation link has been sent to your email id'  
+            mail_subject = 'Ativação de conta no Learning-Electronics'  
             message = render_to_string('acc_active_email.html', {  
                 'user': account,  
                 'domain': current_site.domain,  
-                'uid':urlsafe_base64_encode(force_bytes(account.pk)),  
-                'token':account_activation_token.make_token(account),  
+                'uid': urlsafe_base64_encode(force_bytes(account.pk)),  
+                'token': account_activation_token.make_token(account),  
             })  
-            to_email = form.cleaned_data.get('email')  
-            email = EmailMessage(  
-                        mail_subject, message, to=[to_email]  
-            )  
+
+            to_email = account.email #form.cleaned_data.get('email')  
+            print("aqui")
+            email = EmailMessage(mail_subject, message, to=[to_email])  
             email.send()
-            """ 
         else:
             data['v'] = False
             data['m'] = account_serializer.errors
@@ -80,11 +76,11 @@ def registration_view(request):
             return JsonResponse(data, safe=False)
 
 @csrf_exempt
-@api_view(["POST",])
+@api_view(["GET",])
 @permission_classes([AllowAny])
-def activate_account(request, uidb64, token):  
-    """ try:  
-        uid = force_text(urlsafe_base64_decode(uidb64))  
+def activate(request, uidb64, token):  
+    try:  
+        uid = force_str(urlsafe_base64_decode(uidb64))  
         account = Account.objects.get(pk=uid)  
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
         account = None  
@@ -94,8 +90,9 @@ def activate_account(request, uidb64, token):
         account.save()
         return JsonResponse({ 'v': True, 'm': None }, safe=False)
     else:  
+        account.delete()
         return JsonResponse({ 'v': False, 'm': 'Acctivation link is invalid!' }, safe=False) 
- """
+
 # Everyone can acess this view
 # Receives JSON with keyswords "email", "password" that can't be null
 # If sucessfull login returns: { "v":True, "m": None, "token": generated_auth_token }

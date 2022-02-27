@@ -49,7 +49,6 @@ class AccountManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_active = True
-        user.avatar = None
         user.save(using=self._db)
         
         return user
@@ -67,9 +66,7 @@ class Account(AbstractBaseUser):
     is_admin    = models.BooleanField(default=False)
     is_staff    = models.BooleanField(default=False)
     is_superuser= models.BooleanField(default=False)
-    is_active   = models.BooleanField(default=True)
-    #MAYBE ADD PROFILE PHOTO? AND MAKE IT REQUIRED?
-    #MAYBE IS_ACTIVE?
+    is_active   = models.BooleanField(default=False)
 
     # Uses email field as username
     USERNAME_FIELD = "email"
