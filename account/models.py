@@ -21,8 +21,10 @@ class AccountManager(BaseUserManager):
                 birth_date  = birth_date,
                 password    = password,
         )
+
         user.set_password(password)     # sets password
         user.save(using=self._db)       # saves user
+        
         return user
 
     def create_superuser(self, email, password, first_name="PRIMEIRO", last_name="ULTIMO", birth_date="2001-02-25"):
@@ -49,6 +51,7 @@ class AccountManager(BaseUserManager):
         user.is_active = True
         user.avatar = None
         user.save(using=self._db)
+        
         return user
 
 # Customized User Model
