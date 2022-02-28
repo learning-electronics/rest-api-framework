@@ -1,7 +1,6 @@
-from tkinter import Image
 from rest_framework import serializers
-
 from account.models import Account
+
 
 class RegistrationSerialiazer(serializers.ModelSerializer):
     avatar = serializers.ImageField(source='image.file', allow_null=True)
@@ -42,10 +41,3 @@ class RegistrationSerialiazer(serializers.ModelSerializer):
         account.save()
         return account
 
-    def save_with_img(self):
-        if self.instance.avatar:
-            self.instance.avatar.delete()
-        
-        image = Image.objects.get(user=self.instance)
-        image.file = self.validated_data.get('image')['file']
-        self.save()
