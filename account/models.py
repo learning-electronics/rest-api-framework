@@ -4,7 +4,14 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 # Manages the creations of users (normal users and superusers)
 class AccountManager(BaseUserManager):
-    def create_user(self, email, first_name, last_name, birth_date, password):
+
+    def create_student(self, email, first_name, last_name, birth_date, password):
+        self.create_user(self, email, first_name, last_name, birth_date, password, 1)
+
+    def create_student(self, email, first_name, last_name, birth_date, password):
+        self.create_user(self, email, first_name, last_name, birth_date, password, 2)
+
+    def create_user(self, email, first_name, last_name, birth_date, password, role):
         if not email:
             raise ValueError("User must have an email address")
         if not first_name or not last_name:
@@ -13,6 +20,8 @@ class AccountManager(BaseUserManager):
             raise ValueError("User must have a date of birth")
         if not password:
             raise ValueError("User must have a password")
+        if not role:
+            raise ValueError("User must have a role (Teacher or Student)")
 
         user = self.model(
                 email       = self.normalize_email(email),
@@ -20,6 +29,7 @@ class AccountManager(BaseUserManager):
                 last_name   = last_name,
                 birth_date  = birth_date,
                 password    = password,
+                role        = role,
         )
 
         user.set_password(password)     # sets password
@@ -42,7 +52,8 @@ class AccountManager(BaseUserManager):
                 first_name  = first_name,
                 last_name   = last_name,
                 birth_date  = birth_date,
-                password    = password
+                password    = password,
+                role        = 2,
         )
         
         user.is_admin = True
@@ -55,6 +66,12 @@ class AccountManager(BaseUserManager):
 
 # Customized User Model
 class Account(AbstractBaseUser):
+    DELETED=0
+    STUDENT=1
+    TEACHER=2
+    RULE_CHOICES=( (TEACHER, "Teacher"), (STUDENT, "Student"), (DELETED, "Deleted"))
+
+    role = models.PositiveSmallIntegerField(choices=RULE_CHOICES)
     id = models.AutoField(verbose_name="id", primary_key=True)
     email       = models.EmailField(verbose_name="email", max_length=120, unique=True)
     first_name  = models.CharField(verbose_name="first name", max_length=45)
@@ -71,7 +88,7 @@ class Account(AbstractBaseUser):
     # Uses email field as username
     USERNAME_FIELD = "email"
     # Required Fields to create an user
-    REQUIRED = ["email", "first_name", "last_name", "birth_date",] 
+    REQUIRED = ["role", "email", "first_name", "last_name", "birth_date"] 
 
     #Calls AccountManager to create new users
     objects = AccountManager()

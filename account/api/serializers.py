@@ -3,8 +3,6 @@ from account.models import Account
 
 
 class RegistrationSerialiazer(serializers.ModelSerializer):
-    avatar = serializers.ImageField(source='image.file', allow_null=True)
-
     class Meta:
         model = Account
         fields = [  
@@ -13,27 +11,17 @@ class RegistrationSerialiazer(serializers.ModelSerializer):
                 "last_name",
                 "birth_date",
                 "password",
-                "avatar"
+                "role",
             ]
         extra_kwargs = { 'password': {"write_only":True} }
 
     def save(self):
-        i = None
-
-        if self.instance is not None :
-            if self.instance.avatar:
-                self.instance.avatar.delete()
-            
-            image = Image.objects.get(user=self.instance)
-            image.file = self.validated_data.get('image')['file']
-            i = image.file
-
         account = Account(
                     email = self.validated_data["email"],
                     first_name = self.validated_data["first_name"],
                     last_name = self.validated_data["last_name"],
                     birth_date = self.validated_data["birth_date"],
-                    avatar = i
+                    role = self.validated_data["role"],
                 )
         
         password = self.validated_data['password']

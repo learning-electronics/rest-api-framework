@@ -22,10 +22,12 @@ from account.api.serializers import RegistrationSerialiazer
 from account.models import Account
 from account.api.utils import *
 from django.core.files.storage import default_storage
+from django.core.validators import validate_email
 
 
 # Everyone can acess this view
-# Receives JSON with keyswords "email", "first_name", "last_name", "birth_date", "password" that can't be null
+# Receives JSON with keyswords "email", "first_name", "last_name", "birth_date", "password", "role" that can't be null
+# Keyword "role" can only be 1(Student) or 2(Teacher)
 # If sucessfull registration returns { "v": True, "m": None }
 # If unsuccessful registration:
 # Email already in use returns { "v": False, "m": "account with this email already exists" }
@@ -179,7 +181,7 @@ def change_password(request):
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Receives user token and gets user info
-# If sucessfull returns: { "v": True, "m": None, "info": {"first_name", "last_name", "email", "birth_date", "joined" }}
+# If sucessfull returns: { "v": True, "m": None, "info": {"first_name", "last_name", "email", "birth_date", "joined", "role" }}
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["GET",])
@@ -196,6 +198,7 @@ def profile_view(request):
     info['email'] = account.email
     info['birth_date'] = account.birth_date
     info['joined'] = account.date_joined
+    info['role'] = "Student" if account.role==1 else "Teacher"
 
     try:
         info['avatar'] = account.avatar.url
@@ -225,6 +228,7 @@ def delete_view(request):
     account.email = str(account.id) + "@deleted.com"
     account.first_name = ""
     account.last_name = ""
+    account.role = 0
     account.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
@@ -242,6 +246,10 @@ def update_profile(request):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
+    try:
+        validate_email(packet['email'])
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm':{"email":str(e)}}, safe=False)
     account.email = packet['email']
     account.first_name = packet['first_name']
     account.last_name  = packet['last_name']
