@@ -1,2 +1,2 @@
 # rest-api-framework
-Django REST Framework for learning-electronics web service
+Django REST Framework used to communicate between Learning-Electronics website and the databases
