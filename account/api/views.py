@@ -221,7 +221,7 @@ def delete_view(request):
 
     current_site = get_current_site(request)  
 
-    subject, from_email, to = 'Ativação de conta no Learning-Electronics', settings.EMAIL_HOST_USER, account.email
+    subject, from_email, to = 'Desativação de conta no Learning-Electronics', settings.EMAIL_HOST_USER, account.email
     text_content = 'This is an important message.'
     html_content = delete_code(current_site, account)
 

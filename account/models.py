@@ -71,15 +71,15 @@ class Account(AbstractBaseUser):
     TEACHER=2
     RULE_CHOICES=( (TEACHER, "Teacher"), (STUDENT, "Student"), (DELETED, "Deleted"))
 
-    role = models.PositiveSmallIntegerField(choices=RULE_CHOICES)
-    id = models.AutoField(verbose_name="id", primary_key=True)
+    role        = models.PositiveSmallIntegerField(choices=RULE_CHOICES)
+    id          = models.AutoField(verbose_name="id", primary_key=True)
     email       = models.EmailField(verbose_name="email", max_length=120, unique=True)
     first_name  = models.CharField(verbose_name="first name", max_length=45)
     last_name   = models.CharField(verbose_name="last name", max_length=45)
     birth_date  = models.DateField(verbose_name="birth date")
     date_joined = models.DateField(verbose_name="date joined", auto_now=True)
     last_login  = models.DateTimeField(verbose_name="last login", auto_now=True)
-    avatar = models.ImageField(verbose_name="avatar", null=True, blank=True, max_length=1024)
+    avatar      = models.ImageField(verbose_name="avatar", null=True, blank=True, max_length=1024)
     is_admin    = models.BooleanField(default=False)
     is_staff    = models.BooleanField(default=False)
     is_superuser= models.BooleanField(default=False)
