@@ -11,6 +11,7 @@ from account.api.views import(
     update_profile,
     upload_avatar,
     activate,
+    deactivate,
 )
 
 app_name = "account"
@@ -25,4 +26,5 @@ urlpatterns = [
     path("update_user", update_profile, name="update_profile"),
     path("upload_avatar", upload_avatar, name="upload_avatar"),
     path('activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/', activate, name='activate'),
+    path('deactivate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/', deactivate, name='deactivate'),
 ] 

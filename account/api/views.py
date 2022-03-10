@@ -12,9 +12,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_str 
 from django.utils.http import urlsafe_base64_decode  
 from django.shortcuts import redirect
-from .tokens import account_activation_token  
+from .tokens import account_activation_token, account_deactivation_token
 from django.contrib.auth.models import User  
-from ..templates.email_templates import registration_code
+from ..templates.email_templates import delete_code, registration_code
 from django.core.mail import EmailMultiAlternatives
 
 from account.api.serializers import RegistrationSerialiazer
@@ -90,8 +90,7 @@ def activate(request, uidb64, token):
         account.is_active = True
         account.save()
         return redirect('http://localhost:4200/success-register')
-    else:  
-        account.delete()
+    else:
         return redirect('http://localhost:4200/failed-register')
 
 # Everyone can acess this view
@@ -220,13 +219,39 @@ def delete_view(request):
     if not account.check_password(packet['password']) or account.email != packet['email']:       # Checks if the current password is correct
         return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
 
-    account.is_active = False
-    account.email = str(account.id) + "@deleted.com"
-    account.first_name = ""
-    account.last_name = ""
-    account.role = 0
-    account.save()
+    current_site = get_current_site(request)  
+
+    subject, from_email, to = 'Ativação de conta no Learning-Electronics', settings.EMAIL_HOST_USER, account.email
+    text_content = 'This is an important message.'
+    html_content = delete_code(current_site, account)
+
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
+
+@csrf_exempt
+@api_view(["GET",])
+@permission_classes([AllowAny])
+def deactivate(request, uidb64, token):  
+    try:  
+        uid = force_str(urlsafe_base64_decode(uidb64))  
+        account = Account.objects.get(pk=uid)  
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):  
+        account = None  
+    
+    if account is not None and account_deactivation_token.check_token(account, token):  
+        account.is_active = False
+        account.email = str(account.id) + "@deleted.com"
+        account.first_name = ""
+        account.last_name = ""
+        account.role = 0
+        account.save()
+
+        return redirect('http://localhost:4200/home')
+    else:
+        return redirect('http://localhost:4200/failed-register')
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Receives JSON with keyswords "email", "first_name", "last_name", "birth_date" that can't be null
