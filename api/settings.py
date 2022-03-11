@@ -35,6 +35,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # Custom apps
     'account',
+    'exercise',
 
     # Security
     'corsheaders',
