@@ -1,6 +1,4 @@
 from django.urls import path
-
-
 from account.api.views import(
     delete_view,
     login_view,

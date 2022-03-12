@@ -30,7 +30,7 @@ class AccountManager(BaseUserManager):
                 birth_date  = birth_date,
                 password    = password,
                 role        = role,
-        )
+            )
 
         user.set_password(password)     # sets password
         user.save(using=self._db)       # saves user
@@ -64,11 +64,12 @@ class AccountManager(BaseUserManager):
         
         return user
 
+
 # Customized User Model
 class Account(AbstractBaseUser):
-    DELETED=0
-    STUDENT=1
-    TEACHER=2
+    DELETED = 0
+    STUDENT = 1
+    TEACHER = 2
     RULE_CHOICES=( (TEACHER, "Teacher"), (STUDENT, "Student"), (DELETED, "Deleted"))
 
     role        = models.PositiveSmallIntegerField(choices=RULE_CHOICES)

@@ -198,7 +198,7 @@ def registration_code(current_site, account):
 
                     <!-- Visually Hidden Preheader Text : BEGIN -->
                     <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-                        (Optional) This text will appear in the inbox preview, but not the email body. It can be used to supplement the email subject line or even summarize the email's contents. Extended text preheaders (~490 characters) seems like a better UX for anyone using a screenreader or voice-command apps like Siri to dictate the contents of an email. If this text is not included, email clients will automatically populate it using the text (including image alt text) at the start of the email's body.
+                        Último passo para eliminar a sua conta.    
                     </div>
                     <!-- Visually Hidden Preheader Text : END -->
 
@@ -278,68 +278,6 @@ def registration_code(current_site, account):
                                 </td>
                             </tr>
                             <!-- 1 Column Text + Button : END -->
-
-                            <!-- 2 Even Columns : BEGIN -->
-                            <tr>
-                                <td align="center" valign="top" style="font-size:0; padding: 10px; background-color: #ffffff;">
-                                    <!--[if mso]>
-                                    <table role="presentation" border="0" cellspacing="0" cellpadding="0" width="660">
-                                    <tr>
-                                    <td valign="top" width="330">
-                                    <![endif]-->
-                                    <div style="display:inline-block; margin: 0 -1px; width:100%; min-width:200px; max-width:330px; vertical-align:top;" class="stack-column">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                            <tr>
-                                                <td style="padding: 10px;">
-                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px; text-align: left;">
-                                                        <tr>
-                                                            <td>
-                                                                <img src="https://via.placeholder.com/310" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td style="font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555; padding-top: 10px;" class="stack-column-center">
-                                                                <p style="margin: 0;">Example text</p>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                    <!--[if mso]>
-                                    </td>
-                                    <td valign="top" width="330">
-                                    <![endif]-->
-                                    <div style="display:inline-block; margin: 0 -1px; width:100%; min-width:200px; max-width:330px; vertical-align:top;" class="stack-column">
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                            <tr>
-                                                <td style="padding: 10px;">
-                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;text-align: left;">
-                                                        <tr>
-                                                            <td>
-                                                                <img src="https://via.placeholder.com/310" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td style="font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555; padding-top: 10px;" class="stack-column-center">
-                                                                <p style="margin: 0;">Example text</p>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                    <!--[if mso]>
-                                    </td>
-                                    </tr>
-                                    </table>
-                                    <![endif]-->
-                                </td>
-                            </tr>
-                            <!-- 2 Even Columns : END -->
-
                             <!-- Clear Spacer : BEGIN -->
                             <tr>
                                 <td aria-hidden="true" height="40" style="font-size: 0px; line-height: 0px;">
@@ -405,7 +343,6 @@ def registration_code(current_site, account):
                 </center>
             </body>
             </html>'''
-
 
 def delete_code(current_site, account):
     return '''<!DOCTYPE html>
@@ -600,7 +537,7 @@ def delete_code(current_site, account):
 
                     <!-- Visually Hidden Preheader Text : BEGIN -->
                     <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-                        (Optional) This text will appear in the inbox preview, but not the email body. It can be used to supplement the email subject line or even summarize the email's contents. Extended text preheaders (~490 characters) seems like a better UX for anyone using a screenreader or voice-command apps like Siri to dictate the contents of an email. If this text is not included, email clients will automatically populate it using the text (including image alt text) at the start of the email's body.
+                        Último passo para ativar a sua conta no Learning-Electronics!
                     </div>
                     <!-- Visually Hidden Preheader Text : END -->
 
