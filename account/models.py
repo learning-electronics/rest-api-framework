@@ -8,7 +8,7 @@ class AccountManager(BaseUserManager):
     def create_student(self, email, first_name, last_name, birth_date, password):
         self.create_user(self, email, first_name, last_name, birth_date, password, 1)
 
-    def create_student(self, email, first_name, last_name, birth_date, password):
+    def create_teacher(self, email, first_name, last_name, birth_date, password):
         self.create_user(self, email, first_name, last_name, birth_date, password, 2)
 
     def create_user(self, email, first_name, last_name, birth_date, password, role):
