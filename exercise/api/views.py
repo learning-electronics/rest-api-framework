@@ -1,14 +1,15 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
+from django.db import IntegrityError
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from account.api.decorators import allowed_users
+from account.api.decorators import allowed_users, ownes_exercise
 
-from exercise.models import Exercise
-from exercise.api.serializers import ExerciseSerializer
+from exercise.models import Exercise, Theme
+from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
 from django.core.files.storage import default_storage
 
 
@@ -31,7 +32,9 @@ def add_exercise_view(request):
             return JsonResponse({ 'v': True, 'm': None }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': "Not Valid" }, safe=False)
-    except Exception as e:
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 
@@ -60,4 +63,32 @@ def update_exercise_img_view(request):
     ex.img = file_path
 
     ex.save()
+    return JsonResponse({ 'v': True, 'm': None}, safe=False)
+
+
+# Everyone can acess this view
+# Returns a list of theme objects { "id", "name" }
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([AllowAny])
+def get_themes_view(request):
+    try:
+        theme = Theme.objects.all()
+        theme_serializer = ThemeSerializer(theme, many=True)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+    return JsonResponse(theme_serializer.data, safe=False)
+
+@csrf_exempt
+@api_view(["DELETE", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@ownes_exercise()
+def delete_exercise_view(request, id):
+    try:
+        Exercise.objects.filter(id=id).delete()
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
+
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
