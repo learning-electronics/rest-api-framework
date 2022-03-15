@@ -108,3 +108,26 @@ def delete_exercise_view(request, id):
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
+
+@csrf_exempt
+@api_view(["DELETE", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@ownes_exercise()
+def update_exercise_view(request, id):
+    try:
+        exercise = Exercise.objects.get(id=id)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
+
+    #exercise.theme      = exercise['theme']
+    exercise.question   = exercise['question']
+    exercise.ans1       = exercise['ans1']
+    exercise.ans2       = exercise['ans2']
+    exercise.ans3       = exercise['ans3']
+    exercise.correct    = exercise['correct']
+    exercise.unit       = exercise['unit']
+    exercise.resol      = exercise['resol']
+
+    exercise.save()
+    return JsonResponse({ 'v': True, 'm': None}, safe=False)

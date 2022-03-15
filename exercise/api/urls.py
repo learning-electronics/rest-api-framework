@@ -4,7 +4,8 @@ from exercise.api.views import(
     delete_exercise_view,
     get_themes_view,
     get_units_view,
-    update_exercise_img_view
+    update_exercise_img_view,
+    update_exercise_view
 )
 
 app_name = "exercise"
@@ -15,4 +16,5 @@ urlpatterns = [
     path("themes", get_themes_view, name="themes"),
     path("units", get_units_view, name="units"),
     path("delete_exercise/<int:id>", delete_exercise_view, name="delete_exercise"),
+    path("update_exercise/<int:id>", update_exercise_view, name="update_exercise"),
 ]
