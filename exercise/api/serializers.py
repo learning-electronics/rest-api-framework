@@ -2,7 +2,7 @@ from rest_framework import serializers
 from exercise.models import Exercise, Theme
 
 class ExerciseSerializer(serializers.ModelSerializer):
-    resol = serializers.CharField(allow_null=True)
+    resol = serializers.CharField(allow_null=True, allow_blank=True)
 
     class Meta:
         model = Exercise

@@ -1,14 +1,12 @@
 from django.db import models
 from account.models import Account
+from exercise.api.utils import RULE_CHOICES
     
 class Theme(models.Model):
     id          = models.AutoField(primary_key=True)
     name        = models.CharField(max_length=200)
 
 class Exercise(models.Model):
-
-    RULE_CHOICES=( ("A", "Ampere"), ("V", "Volt"), ("W", "Watt"), ("Ohm", "Ohm") )
-
     id          = models.AutoField(primary_key=True, verbose_name="id")
     teacher     = models.ForeignKey(Account, null=True, on_delete=models.SET_NULL, limit_choices_to={'role': 2}, verbose_name="teacher id")
     theme       = models.ManyToManyField(Theme, verbose_name="theme id")

@@ -11,6 +11,7 @@ from account.api.decorators import allowed_users, ownes_exercise
 from exercise.models import Exercise, Theme
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
 from django.core.files.storage import default_storage
+from exercise.api.utils import RULE_CHOICES
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -26,12 +27,12 @@ def add_exercise_view(request):
         exercise_data = JSONParser().parse(request)
         exercise_data["teacher"] = request.user.id
         exercise_serializer = ExerciseSerializer(data=exercise_data)
-        
+
         if exercise_serializer.is_valid():
             exercise_serializer.save()        
             return JsonResponse({ 'v': True, 'm': None }, safe=False)
 
-        return JsonResponse({ 'v': False, 'm': "Not Valid" }, safe=False)
+        return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
@@ -79,6 +80,21 @@ def get_themes_view(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
     return JsonResponse(theme_serializer.data, safe=False)
+
+
+# Everyone can acess this view
+# Returns a list of the possible units
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([AllowAny])
+def get_units_view(request):
+    list_units = []
+    
+    for unit in RULE_CHOICES:
+        list_units.append(unit[0])
+
+    return JsonResponse(list_units, safe=False)
+
 
 @csrf_exempt
 @api_view(["DELETE", ])
