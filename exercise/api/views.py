@@ -7,6 +7,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from account.api.decorators import allowed_users, ownes_exercise
+from account.models import Account
 
 from exercise.models import Exercise, Theme
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
@@ -94,6 +95,37 @@ def get_units_view(request):
         list_units.append(unit[0])
 
     return JsonResponse(list_units, safe=False)
+
+
+# Everyone can acess this view
+# Returns a list of exercises
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([AllowAny])
+def get_exercises_view(request):
+    try:
+        exercise = Exercise.objects.all()
+        exercise_serializer = ExerciseSerializer(exercise, many=True)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+    return JsonResponse(exercise_serializer.data, safe=False)
+
+
+# Everyone can acess this view
+# Returns a list of exercises created by the user
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+def get_my_exercises_view(request):
+    try:
+        exercise = Exercise.objects.filter(teacher=request.user.id)
+        exercise_serializer = ExerciseSerializer(exercise, many=True)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+    return JsonResponse(exercise_serializer.data, safe=False)
 
 
 @csrf_exempt
