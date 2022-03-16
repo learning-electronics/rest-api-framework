@@ -6,7 +6,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Exercise
-        fields = [  
+        fields = [
                 "teacher",
                 "theme",
                 "question",
@@ -20,7 +20,7 @@ class ExerciseSerializer(serializers.ModelSerializer):
 
     def save(self):
         exercise = Exercise(
-                teacher  = self.validated_data["teacher"],
+                teacher     = self.validated_data["teacher"],
                 question    = self.validated_data["question"],
                 ans1        = self.validated_data["ans1"],
                 ans2        = self.validated_data["ans2"],

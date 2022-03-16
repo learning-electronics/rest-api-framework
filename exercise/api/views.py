@@ -7,7 +7,6 @@ from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from account.api.decorators import allowed_users, ownes_exercise
-from account.models import Account
 
 from exercise.models import Exercise, Theme
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
@@ -27,11 +26,11 @@ def add_exercise_view(request):
     try:
         exercise_data = JSONParser().parse(request)
         exercise_data["teacher"] = request.user.id
-        exercise_serializer = ExerciseSerializer(data=exercise_data)
+        exercise_serializer = ExerciseSerializer(data=exercise_data) 
 
         if exercise_serializer.is_valid():
-            exercise_serializer.save()        
-            return JsonResponse({ 'v': True, 'm': None }, safe=False)
+            ex = exercise_serializer.save()
+            return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
@@ -141,8 +140,9 @@ def delete_exercise_view(request, id):
 
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
+
 @csrf_exempt
-@api_view(["DELETE", ])
+@api_view(["PUT", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher"])
 @ownes_exercise()
