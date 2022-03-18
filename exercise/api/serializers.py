@@ -35,6 +35,9 @@ class ExerciseSerializer(serializers.ModelSerializer):
         exercise.save()
         return exercise
 
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
+
 class ThemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Theme

@@ -29,3 +29,6 @@ class RegistrationSerialiazer(serializers.ModelSerializer):
         account.save()
         
         return account
+
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
