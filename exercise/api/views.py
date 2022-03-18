@@ -142,24 +142,23 @@ def delete_exercise_view(request, id):
 
 
 @csrf_exempt
-@api_view(["PUT", ])
+@api_view(["PATCH", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher"])
 @ownes_exercise()
 def update_exercise_view(request, id):
     try:
         exercise = Exercise.objects.get(id=id)
+        exercise.theme.clear()
+        exercise_data = JSONParser().parse(request)
+        exercise_serializer = ExerciseSerializer(instance=exercise, data=exercise_data, partial=True)
+        if exercise_serializer.is_valid():
+            exercise_serializer.update(exercise, exercise_serializer.validated_data)
+            return JsonResponse({ 'v': True, 'm': None}, safe=False)
+        return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
-        return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
-
-    #exercise.theme      = exercise['theme']
-    exercise.question   = exercise['question']
-    exercise.ans1       = exercise['ans1']
-    exercise.ans2       = exercise['ans2']
-    exercise.ans3       = exercise['ans3']
-    exercise.correct    = exercise['correct']
-    exercise.unit       = exercise['unit']
-    exercise.resol      = exercise['resol']
-
-    exercise.save()
-    return JsonResponse({ 'v': True, 'm': None}, safe=False)
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
