@@ -47,9 +47,9 @@ def add_exercise_view(request):
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher"])
-def update_exercise_img_view(request):
+def update_exercise_img_view(request, id):
     try:
-        ex = Exercise.objects.latest(teacher=request.user.id)
+        ex = Exercise.objects.filter(id=id)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 

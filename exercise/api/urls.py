@@ -14,7 +14,7 @@ app_name = "exercise"
 
 urlpatterns = [
     path("add_exercise", add_exercise_view, name="add_exercise"),
-    path("update_ex_img", update_exercise_img_view, name="update_ex_img"),
+    path("update_ex_img/<int:id>", update_exercise_img_view, name="update_ex_img"),
     path("themes", get_themes_view, name="themes"),
     path("units", get_units_view, name="units"),
     path("exercises", get_exercises_view, name="exercises"),
