@@ -1,5 +1,3 @@
-from functools import partial
-from struct import pack
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
@@ -264,12 +262,15 @@ def deactivate(request, uidb64, token):
 @permission_classes([IsAuthenticated]) 
 def update_profile(request):
     packet = JSONParser().parse(request)                    # Handles received data
+    
     try:
         account = Account.objects.get(email=request.user)   # Gets account of user that sent the request (trough generated_auth_token)
         account_serialzier = RegistrationSerialiazer(instance=account, data=packet, partial=True)
         if account_serialzier.is_valid():
+         
             account_serialzier.update(account, account_serialzier.validated_data)
             return JsonResponse({ 'v': True, 'm': None}, safe=False)
+
         return JsonResponse({ 'v': False, 'm': account_serialzier.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
@@ -277,7 +278,6 @@ def update_profile(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
-
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Receives a form-data with key "avatar" that can't be null
