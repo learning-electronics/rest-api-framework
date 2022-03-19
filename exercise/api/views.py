@@ -38,7 +38,6 @@ def add_exercise_view(request):
     except KeyError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
-
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Receives a form-data with key "img" that can be null
 # If sucessfull updates user data and returns: { "v": True, "m": None }
@@ -47,9 +46,9 @@ def add_exercise_view(request):
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher"])
-def update_exercise_img_view(request):
+def update_exercise_img_view(request, id):
     try:
-        ex = Exercise.objects.latest(teacher=request.user.id)
+        ex = Exercise.objects.filter(id=id)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
 
@@ -66,7 +65,6 @@ def update_exercise_img_view(request):
     ex.save()
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
-
 # Everyone can acess this view
 # Returns a list of theme objects { "id", "name" }
 @csrf_exempt
@@ -81,7 +79,6 @@ def get_themes_view(request):
 
     return JsonResponse(theme_serializer.data, safe=False)
 
-
 # Everyone can acess this view
 # Returns a list of the possible units
 @csrf_exempt
@@ -94,7 +91,6 @@ def get_units_view(request):
         list_units.append(unit[0])
 
     return JsonResponse(list_units, safe=False)
-
 
 # Everyone can acess this view
 # Returns a list of exercises
@@ -109,7 +105,6 @@ def get_exercises_view(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
     return JsonResponse(exercise_serializer.data, safe=False)
-
 
 # Everyone can acess this view
 # Returns a list of exercises created by the user
@@ -126,7 +121,10 @@ def get_my_exercises_view(request):
 
     return JsonResponse(exercise_serializer.data, safe=False)
 
-
+# Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only the user that created the exercise can acess this view, therefore it must also be a teacher
+# If sucessfull updates user data and returns: { "v": True, "m": None }
+# If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["DELETE", ])
 @permission_classes([IsAuthenticated])
@@ -140,7 +138,11 @@ def delete_exercise_view(request, id):
 
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
-
+# Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only the user that created the exercise can acess this view, therefore it must also be a teacher
+# Receives a JSON with the following fields "question", "ans1", "ans2", "ans3", "correct", "unit", "resol"
+# If sucessfull updates user data and returns: { "v": True, "m": None }
+# If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["PATCH", ])
 @permission_classes([IsAuthenticated])
@@ -152,9 +154,11 @@ def update_exercise_view(request, id):
         exercise.theme.clear()
         exercise_data = JSONParser().parse(request)
         exercise_serializer = ExerciseSerializer(instance=exercise, data=exercise_data, partial=True)
+        
         if exercise_serializer.is_valid():
             exercise_serializer.update(exercise, exercise_serializer.validated_data)
             return JsonResponse({ 'v': True, 'm': None}, safe=False)
+        
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
@@ -162,3 +166,4 @@ def update_exercise_view(request, id):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+        
