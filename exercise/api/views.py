@@ -51,7 +51,7 @@ def update_exercise_img_view(request, id):
         ex = Exercise.objects.get(id=id)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
-
+    
     file = request.FILES['img']
     extension = file.name.split('.')[-1]
     file_name = "exercises/" + str(id) + "." + extension
@@ -166,3 +166,15 @@ def update_exercise_view(request, id):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+        
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([AllowAny])
+def get_exercises_by_theme_view(request, id):
+	try:
+		exercises = Exercise.objects.filter(theme=id)
+		exercise_serializer = ExerciseSerializer(exercises, many=True)
+	except BaseException as e:
+		return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+	
+	return JsonResponse(exercise_serializer.data, safe=False)

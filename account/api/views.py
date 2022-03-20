@@ -17,7 +17,7 @@ from django.contrib.auth.models import User
 from ..templates.email_templates import delete_code, registration_code
 from django.core.mail import EmailMultiAlternatives
 
-from account.api.serializers import RegistrationSerialiazer
+from account.api.serializers import RegistrationSerializer
 from account.models import Account
 from account.api.utils import *
 from django.core.files.storage import default_storage
@@ -38,7 +38,7 @@ from django.core.validators import validate_email
 def registration_view(request):
     try:
         data = {}
-        account_serializer = RegistrationSerialiazer(data=JSONParser().parse(request))  # Handles received data and instanciated user
+        account_serializer = RegistrationSerializer(data=JSONParser().parse(request))  # Handles received data and instanciated user
         if account_serializer.is_valid():                                               # Checks if serializer is valid
             account = account_serializer.save()                                         # Saves new user
             
@@ -265,7 +265,7 @@ def update_profile(request):
     
     try:
         account = Account.objects.get(email=request.user)   # Gets account of user that sent the request (trough generated_auth_token)
-        account_serialzier = RegistrationSerialiazer(instance=account, data=packet, partial=True)
+        account_serialzier = RegistrationSerializer(instance=account, data=packet, partial=True)
         if account_serialzier.is_valid():
          
             account_serialzier.update(account, account_serialzier.validated_data)
