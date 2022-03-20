@@ -20,7 +20,8 @@ class ClassroomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Classroom
-        fields = [  
+        fields = [
+                "id",  
                 "name",
                 "teacher",
                 "password",

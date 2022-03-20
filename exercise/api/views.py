@@ -167,3 +167,14 @@ def update_exercise_view(request, id):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
         
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([AllowAny])
+def get_exercises_by_theme_view(request, id):
+	try:
+		exercises = Exercise.objects.filter(theme=id)
+		exercise_serializer = ExerciseSerializer(exercises, many=True)
+	except BaseException as e:
+		return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+	
+	return JsonResponse(exercise_serializer.data, safe=False)
