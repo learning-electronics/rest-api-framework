@@ -48,13 +48,13 @@ def add_exercise_view(request):
 @allowed_users(["Teacher"])
 def update_exercise_img_view(request, id):
     try:
-        ex = Exercise.objects.filter(id=id)
+        ex = Exercise.objects.get(id=id)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
-
+    
     file = request.FILES['img']
     extension = file.name.split('.')[-1]
-    file_name = "exercises/" + str(ex.id) + "." + extension
+    file_name = "exercises/" + str(id) + "." + extension
 
     if default_storage.exists(file_name):
         default_storage.delete(file_name)
