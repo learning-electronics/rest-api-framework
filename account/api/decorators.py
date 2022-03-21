@@ -38,7 +38,7 @@ def my_classroom():
             if not Classroom.objects.filter(id=kwargs['id']).exists():
                 return JsonResponse({ 'v': False, 'm': "Doesn't Exist" }, safe=False)
 
-            if Account.objects.get(email= request.user).id == Classroom.objects.get(id=kwargs['id']).teacher.id:
+            if (request.user.role == 1 and request.user.student.filter(id=kwargs['id']).exists()) or (request.user.role == 2 and request.user.teacher.filter(id=kwargs['id']).exists()):
                 return view_func(request, *args, **kwargs)
             else:
                 return JsonResponse({ 'v': False, 'm': "Not your class" }, safe=False)

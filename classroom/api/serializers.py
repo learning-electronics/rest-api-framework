@@ -2,7 +2,7 @@ from rest_framework import serializers
 from account.models import Account
 from classroom.models import Classroom
 
-class StudentListing(serializers.RelatedField):
+class AccountInfo(serializers.RelatedField):
     class Meta:
         model = Account
         fields = [
@@ -16,7 +16,8 @@ class StudentListing(serializers.RelatedField):
 
 
 class ClassroomSerializer(serializers.ModelSerializer):
-    students = StudentListing(allow_null=True, many=True, read_only=True)
+    students = AccountInfo(allow_null=True, many=True, read_only=True, required=False)
+    teacher  = AccountInfo(allow_null=True, read_only=True)
 
     class Meta:
         model = Classroom
@@ -31,8 +32,8 @@ class ClassroomSerializer(serializers.ModelSerializer):
 
     def save(self):
         classroom = Classroom(
-                    name    = self.validated_data["name"],
-                    teacher = self.validated_data["teacher"],
+                    name     = self.validated_data["name"],
+                    teacher  = self["teacher"],
                     password = self.validated_data["password"]
                 )
         classroom.save()
