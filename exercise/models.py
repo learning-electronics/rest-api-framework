@@ -18,3 +18,4 @@ class Exercise(models.Model):
     correct     = models.CharField(max_length=10, verbose_name="correct answer")
     unit        = models.CharField(max_length=5, choices=RULE_CHOICES, verbose_name="unit")
     resol       = models.CharField(max_length=500, null=True, blank=True, verbose_name="resolution")
+    date        = models.DateField(verbose_name="date", auto_now=True)

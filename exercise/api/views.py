@@ -114,12 +114,13 @@ def get_exercises_view(request):
 @allowed_users(["Teacher"])
 def get_my_exercises_view(request):
     try:
-        exercise = Exercise.objects.filter(teacher=request.user.id)
-        exercise_serializer = ExerciseSerializer(exercise, many=True)
+        exercise = list(Exercise.objects.filter(teacher=request.user.id).values('id', 'question', 'ans1', 'ans2', 'ans3', 'correct', 'unit', 'resol', 'theme__id', 'img'))
+        #exercise_serializer = ExerciseSerializer(exercise, many=True)
+
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
-
-    return JsonResponse(exercise_serializer.data, safe=False)
+ 
+    return JsonResponse(exercise, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only the user that created the exercise can acess this view, therefore it must also be a teacher
