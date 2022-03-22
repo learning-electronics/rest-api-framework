@@ -12,6 +12,7 @@ from exercise.models import Exercise, Theme
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
 from django.core.files.storage import default_storage
 from exercise.api.utils import RULE_CHOICES
+import pickle
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -114,13 +115,21 @@ def get_exercises_view(request):
 @allowed_users(["Teacher"])
 def get_my_exercises_view(request):
     try:
-        exercise = list(Exercise.objects.filter(teacher=request.user.id).values('id', 'question', 'ans1', 'ans2', 'ans3', 'correct', 'unit', 'resol', 'theme__id', 'img'))
-        #exercise_serializer = ExerciseSerializer(exercise, many=True)
+        exercises = Exercise.objects.filter(teacher=request.user.id)
+        ids = exercises.values_list('id', flat=True)
+
+        reloaded_qs = Exercise.objects.all()
+        reloaded_qs.query = pickle.loads(pickle.dumps(ids.query))
+        exercise_serializer = ExerciseSerializer(exercises, many=True)
+
+        if exercise_serializer.is_valid:
+            for val, q in enumerate(reloaded_qs):
+                exercise_serializer.data[val].update(q)
 
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
  
-    return JsonResponse(exercise, safe=False)
+    return JsonResponse(exercise_serializer.data, safe=False)
 
 # Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only the user that created the exercise can acess this view, therefore it must also be a teacher
