@@ -1,7 +1,7 @@
 from django.db import models
 from account.models import Account
 from exercise.api.utils import RULE_CHOICES
-    
+
 class Theme(models.Model):
     id          = models.AutoField(primary_key=True)
     name        = models.CharField(max_length=200)

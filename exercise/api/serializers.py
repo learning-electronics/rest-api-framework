@@ -15,7 +15,8 @@ class ExerciseSerializer(serializers.ModelSerializer):
                 "ans3",
                 "correct",
                 "unit",
-                "resol"
+                "resol",
+                "date"
             ]
 
     def save(self):
