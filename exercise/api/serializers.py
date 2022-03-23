@@ -16,7 +16,8 @@ class ExerciseSerializer(serializers.ModelSerializer):
                 "correct",
                 "unit",
                 "resol",
-                "date"
+                "date", 
+                "img"
             ]
 
     def save(self):

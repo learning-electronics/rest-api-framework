@@ -125,7 +125,6 @@ def get_my_exercises_view(request):
         if exercise_serializer.is_valid:
             for val, q in enumerate(reloaded_qs):
                 exercise_serializer.data[val].update(q)
-        print(exercise_serializer.data)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
  
