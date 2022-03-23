@@ -160,12 +160,18 @@ def delete_exercise_view(request, id):
 def update_exercise_view(request, id):
     try:
         exercise = Exercise.objects.get(id=id)
-        exercise.theme.clear()
+        saved_img = exercise.img
         exercise_data = JSONParser().parse(request)
         exercise_serializer = ExerciseSerializer(instance=exercise, data=exercise_data, partial=True)
         
         if exercise_serializer.is_valid():
             exercise_serializer.update(exercise, exercise_serializer.validated_data)
+
+            # The code below is dumb, nontheless it works.
+            # There is probably a better way to do this.
+            exercise.img = saved_img
+            exercise.save()
+
             return JsonResponse({ 'v': True, 'm': None}, safe=False)
         
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
