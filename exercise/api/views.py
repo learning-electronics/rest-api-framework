@@ -100,8 +100,16 @@ def get_units_view(request):
 @permission_classes([AllowAny])
 def get_exercises_view(request):
     try:
-        exercise = Exercise.objects.all()
-        exercise_serializer = ExerciseSerializer(exercise, many=True)
+        exercises = Exercise.objects.all()
+        ids = exercises.values_list('id', flat=True)
+
+        reloaded_qs = Exercise.objects.all()
+        reloaded_qs.query = pickle.loads(pickle.dumps(ids.query))
+        exercise_serializer = ExerciseSerializer(exercises, many=True)
+
+        if exercise_serializer.is_valid:
+            for val, q in enumerate(reloaded_qs):
+                exercise_serializer.data[val].update(q)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
