@@ -45,6 +45,7 @@ def get_my_classrooms_view(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who are linked to the given classroom can access
 # Returns detailed info of the classroom user is linked to
 # If sucessfull returns {
 #   "id": <int> classroom_id ,
@@ -65,9 +66,10 @@ def get_info_classroom_view(request, id):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Only user who have the role Teacher (user.role==2) can access
+# Only users who have the role Teacher (user.role==2) can access (either student or teacher)
 # Receives a JSON with the following fields "name" and "password"
-# If successful returns: { "v": True, "m": classroom.id }
+# Creates a new classroom object
+# If successful returns: { "v": True, "m": <int> classroom.id }
 # If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
 @api_view(["POST", ])
@@ -90,8 +92,10 @@ def add_classroom_view(request):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Only user who have the role Teacher (user.role==2) can access
-# Receives classroom id trough URL 
+# Only users who have the role Teacher (user.role==2) can access
+# Only users who are linked to the given classroom can access 
+# Receives classroom id trough URL
+# Deletes classroom object 
 # If successful returns: { "v": True, "m": None}
 # If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
@@ -108,6 +112,12 @@ def delete_classroom_view(request, id):
 	return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Student (user.role==1) can access
+# Receives classroom id trough URL
+# Receives a JSON with the following fields "password" 
+# Checks given password and if correct adds student to the classroom
+# If successful returns: { "v": True, "m": <int> classroom.id}
+# If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
@@ -117,18 +127,32 @@ def enter_classroom_view(request, id):
     try:
         classroom = Classroom.objects.get(id=id)
 
+        # Can't use built in funtcion check_password function to check classroom password
+        # this function is from passlib.hash and checks if the given secret (aka data["password"]) 
+        # is correct using the django store password format <algorithm>$<iterations>$<salt>$<hash>
+        # the default algorithm django uses is PBKDF2_SHA256
+        # if another algorithm is used, opt for other function to verify 
         if not django_pbkdf2_sha256.verify(data["password"], classroom.password):
             return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
     
         classroom.students.add(request.user)
         classroom.save_no_pass()
-        return JsonResponse({ 'v': True, 'm': None}, safe=False)
+        return JsonResponse({ 'v': True, 'm': id}, safe=False)
 
     except TypeError as e:
-        return JsonResponse({ 'v': 2, 'm': str(e)}, safe=False)
+        return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
     except BaseException as e:
-        return JsonResponse({ 'v': 3, 'm': str(e)}, safe=False)
+        return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
 
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Teacher (user.role==2) can access
+# Only users who are linked to the given classroom can access
+# Receives classroom id trough URL 
+# Receives a JSON with the following optional fields "name" and "password",
+# the keyword "students" NEEDS to be present, look for function description on classroom/api/serializers for more info
+# Updates the fields of an classroom object
+# If successful returns: { "v": True, "m": None}
+# If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
 @api_view(["PATCH", ])
 @permission_classes([IsAuthenticated])

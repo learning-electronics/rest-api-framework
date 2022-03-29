@@ -19,6 +19,9 @@ def allowed_users(allowed_roles=[]):
         return wrapper_func
     return decorator
 
+# Checks if the given user (Teacher) is the author/owner of the exercise
+# If sucessfull it returns (allows) the user to access the view_func
+# If unsuccessful returns: { "v": False, "m": Error message }  
 def ownes_exercise():
     def decorator(view_func):
         def wrapper_func(request, *args, **kwargs):
@@ -31,7 +34,11 @@ def ownes_exercise():
                 return JsonResponse({ 'v': False, 'm': "Not your exercise" }, safe=False)
         return wrapper_func
     return decorator
-
+    
+# Checks if the classroom belongs to the teacher(user.role==2)
+# Checks if the student belongs to the classroom(user.role==1)
+# If sucessfull it returns (allows) the user to access the view_func
+# If unsuccessful returns: { "v": False, "m": Error message }  
 def my_classroom():
     def decorator(view_func):
         def wrapper_func(request, *args, **kwargs):

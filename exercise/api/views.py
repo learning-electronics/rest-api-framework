@@ -67,7 +67,8 @@ def update_exercise_img_view(request, id):
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
 # Everyone can acess this view
-# Returns a list of theme objects { "id", "name" }
+# If sucessfull returns a list of theme objects { "id", "name" }
+# If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["GET", ])
 @permission_classes([AllowAny])
@@ -115,7 +116,7 @@ def get_exercises_view(request):
 
     return JsonResponse(exercise_serializer.data, safe=False)
 
-# Everyone can acess this view
+# Only authenticated users can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Returns a list of exercises created by the user
 @csrf_exempt
 @api_view(["GET", ])
