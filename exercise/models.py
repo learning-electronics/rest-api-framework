@@ -19,3 +19,4 @@ class Exercise(models.Model):
     unit        = models.CharField(max_length=5, choices=RULE_CHOICES, verbose_name="unit")
     resol       = models.CharField(max_length=500, null=True, blank=True, verbose_name="resolution")
     date        = models.DateField(verbose_name="date", auto_now=True)
+    public      = models.BooleanField(verbose_name="public", default=True)

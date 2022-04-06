@@ -2,7 +2,9 @@ from rest_framework import serializers
 from exercise.models import Exercise, Theme
 
 class ExerciseSerializer(serializers.ModelSerializer):
-    resol = serializers.CharField(allow_null=True, allow_blank=True)
+    resol = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    public = serializers.BooleanField(allow_null=True, required=False)
+
 
     class Meta:
         model = Exercise
@@ -17,7 +19,8 @@ class ExerciseSerializer(serializers.ModelSerializer):
                 "unit",
                 "resol",
                 "date", 
-                "img"
+                "img",
+                "public"
             ]
 
     def save(self):
@@ -29,8 +32,13 @@ class ExerciseSerializer(serializers.ModelSerializer):
                 ans3        = self.validated_data["ans3"],
                 correct     = self.validated_data["correct"],
                 unit        = self.validated_data["unit"],
-                resol       = self.validated_data["resol"]
             )
+
+        if "resol" in self.validated_data.keys():
+            exercise.resol=self.validated_data["resol"]
+
+        if "public" in self.validated_data.keys():
+            exercise.resol=self.validated_data["public"]
         
         exercise.save()
         exercise.theme.set(self.validated_data["theme"])

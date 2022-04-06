@@ -101,7 +101,7 @@ def get_units_view(request):
 @permission_classes([AllowAny])
 def get_exercises_view(request):
     try:
-        exercises = Exercise.objects.all()
+        exercises = Exercise.objects.filter(public=True)
         ids = exercises.values_list('id', flat=True)
 
         reloaded_qs = Exercise.objects.all()
@@ -196,7 +196,7 @@ def update_exercise_view(request, id):
 @permission_classes([AllowAny])
 def get_exercises_by_theme_view(request, id):
 	try:
-		exercises = Exercise.objects.filter(theme=id)
+		exercises = Exercise.objects.filter(theme=id, public=False)
 		exercise_serializer = ExerciseSerializer(exercises, many=True)
 	except BaseException as e:
 		return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)

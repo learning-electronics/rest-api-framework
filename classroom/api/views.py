@@ -66,7 +66,7 @@ def get_info_classroom_view(request, id):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Only users who have the role Teacher (user.role==2) can access (either student or teacher)
+# Only users who have the role Teacher (user.role==2) can access
 # Receives a JSON with the following fields "name" and "password"
 # Creates a new classroom object
 # If successful returns: { "v": True, "m": <int> classroom.id }
