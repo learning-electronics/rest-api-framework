@@ -48,6 +48,26 @@ class ExerciseSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        info={
+            "id": instance.id,
+            "theme": [theme.id for theme in instance.theme.all()],
+            "question": instance.question,
+            "ans1": instance.ans1,
+            "ans2": instance.ans2,
+            "ans3": instance.ans3,
+            "correct": instance.correct,
+            "unit": instance.unit,
+            "resol": instance.resol,
+            "date": instance.date,
+            "public": instance.public
+        }
+        try:
+                info["img"]=instance.img.url
+        except:
+                info["img"]=None
+        return info
+
 class ThemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Theme

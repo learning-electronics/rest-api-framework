@@ -148,8 +148,7 @@ def enter_classroom_view(request, id):
 # Only users who have the role Teacher (user.role==2) can access
 # Only users who are linked to the given classroom can access
 # Receives classroom id trough URL 
-# Receives a JSON with the following optional fields "name" and "password",
-# the keyword "students" NEEDS to be present, look for function description on classroom/api/serializers for more info
+# Receives a JSON with the following optional fields "name", "password", "students", "exercises"
 # Updates the fields of an classroom object
 # If successful returns: { "v": True, "m": None}
 # If unsuccessful returns: { "v": False, "m": Error message }
@@ -161,7 +160,6 @@ def enter_classroom_view(request, id):
 def update_classroom_view(request, id):
     try:
         classroom = Classroom.objects.get(id=id)
-        classroom.students.clear()
         classroom_data = JSONParser().parse(request)
         classroom_serializer = AddClassroomSerializer(instance=classroom, data=classroom_data, partial=True)
         

@@ -1,5 +1,6 @@
 from django.db import models
 from account.models import Account
+from exercise.models import Exercise
 from django.contrib.auth.hashers import make_password
 
 class Classroom(models.Model):
@@ -7,6 +8,7 @@ class Classroom(models.Model):
     name        = models.CharField(max_length=200, unique=True, verbose_name="name")
     teacher     = models.ForeignKey(Account, on_delete=models.CASCADE, limit_choices_to={'role': 2}, verbose_name="teacher", related_name='teacher')
     students    = models.ManyToManyField(Account, verbose_name="students", related_name="students", blank=True, limit_choices_to={'role': 1})
+    exercises   = models.ManyToManyField(Exercise, verbose_name="exercises", related_name="exercises", blank=True, default=None)
     date_created= models.DateField(verbose_name="date created", auto_now=True)
     password    = models.CharField(('password'), max_length=128)
 

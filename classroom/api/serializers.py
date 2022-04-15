@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from account.models import Account
 from classroom.models import Classroom
-from django.contrib.auth.hashers import make_password
+from exercise.api.serializers import ExerciseSerializer
 
 class AccountInfo(serializers.RelatedField):
     class Meta:
@@ -19,6 +19,7 @@ class AccountInfo(serializers.RelatedField):
 class ClassroomSerializer(serializers.ModelSerializer):
     students = AccountInfo(allow_null=True, many=True, read_only=True, required=False)
     teacher  = AccountInfo(allow_null=True, read_only=True)
+    exercises= ExerciseSerializer(allow_null=True, many=True, read_only=True, required=False)
 
     class Meta:
         model = Classroom
@@ -26,8 +27,10 @@ class ClassroomSerializer(serializers.ModelSerializer):
                 "id",  
                 "name",
                 "teacher",
-                "students"
+                "students",
+                "exercises",
             ]
+            
 # Serializers used to create/update classroom objects
 class AddClassroomSerializer(serializers.ModelSerializer):
     class Meta: 
@@ -36,18 +39,19 @@ class AddClassroomSerializer(serializers.ModelSerializer):
                 "name",
                 "teacher",
                 "password",
-                "students"
+                "students",
+                "exercises",
             ]
         extra_kwargs = { 'password': {"write_only":True} }
 
     # Updates an already existing Classroom object
-    # It takes a json with optional field "name" and "password"
-    # NOTE: the keyword "students" need to be a list of integers with the id numbers of the students, and should always have 
-    # the id's of the students in that class (remove an id if you want to remove a student and keep the other ones)
+    # It takes a json with optional field "name", "password", "students" and "exercises"
     def update(self, instance, validated_data):
         instance.name = validated_data.get("name", instance.name)
-        if "students" in validated_data.keys():
+        if "password" in validated_data.keys():
             instance.students.set(validated_data.get("students", instance.students))
+        if "exercises" in validated_data.keys():
+            instance.exercises.set(validated_data.get("exercises", instance.exercises))
         if "password" in validated_data.keys():
             instance.password = validated_data.get("password", instance.password)
             instance.save()

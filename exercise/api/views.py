@@ -16,7 +16,7 @@ import pickle
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Receives a JSON with the following fields "theme", "question", "ans1", "ans2", "ans3", "correct", "unit", "resol"
+# Receives a JSON with the following fields "theme", "question", "ans1", "ans2", "ans3", "correct", "unit" and optional "resol"(String) and "public"(Bool)
 # If sucessfull updates user data and returns: { "v": True, "m": None }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
