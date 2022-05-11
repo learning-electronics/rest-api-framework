@@ -1,9 +1,10 @@
+from ast import For
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.parsers import JSONParser
+from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
 from account.api.decorators import allowed_users, ownes_exercise
@@ -34,6 +35,27 @@ def add_exercise_view(request):
             return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@parser_classes([MultiPartParser, FormParser,])
+def add_exercise_solver_view(request):
+    try:
+        cirpath = request.FILES['cirpath']
+        print(request.data)
+        print(cirpath)
+        print(cirpath.name)
+        print(request.data.get("theme"))
+        data = FormParser().parse(request)
+        #handler(cirpath, request.user.id, request.data.get("theme"), request.data.get("theme"), public, target, freq, unit=None)
+        #return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
+        return JsonResponse({ 'v': True, 'm': "foo" }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
