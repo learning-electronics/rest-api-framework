@@ -20,7 +20,10 @@ from passlib.hash import django_pbkdf2_sha256
 @permission_classes([IsAuthenticated])
 def get_classrooms_view(request):
     try:
-        classrooms_data = list(Classroom.objects.all().values('id', 'name'))
+        classrooms_data = list(Classroom.objects.all().values('id', 'name', 'teacher__first_name'))
+        
+        for i, c in enumerate(Classroom.objects.all()):
+            classrooms_data[i]['students'] = c.students.count()
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
