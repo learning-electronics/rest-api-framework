@@ -17,6 +17,6 @@ class Exercise(models.Model):
     ans3        = models.CharField(max_length=10, verbose_name="answer 3")
     correct     = models.CharField(max_length=10, verbose_name="correct answer")
     unit        = models.CharField(max_length=5, choices=RULE_CHOICES, verbose_name="unit")
-    resol       = models.CharField(max_length=500, null=True, blank=True, verbose_name="resolution")
+    resol       = models.TextField(null=True, blank=True, verbose_name="resolution")
     date        = models.DateField(verbose_name="date", auto_now=True)
     public      = models.BooleanField(verbose_name="public", default=True)
