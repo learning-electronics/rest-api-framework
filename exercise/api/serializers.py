@@ -36,12 +36,13 @@ class ExerciseSerializer(serializers.ModelSerializer):
                 unit        = self.validated_data["unit"],
             )
 
+
         if "resol" in self.validated_data.keys():
             exercise.resol=self.validated_data["resol"]
 
         if "public" in self.validated_data.keys():
-            exercise.resol=self.validated_data["public"]
-        
+            exercise.public=self.validated_data["public"]
+
         exercise.save()
         exercise.theme.set(self.validated_data["theme"])
         exercise.save()

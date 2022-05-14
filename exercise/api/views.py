@@ -1,4 +1,3 @@
-from ast import For
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
@@ -14,7 +13,17 @@ from classroom.models import Classroom
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
 from django.core.files.storage import default_storage
 from exercise.api.utils import RULE_CHOICES
+
 import pickle
+import random, string
+
+
+from os.path import abspath,realpath,dirname,join
+import sys
+import os
+project_path=dirname(dirname(dirname(dirname(realpath(__file__)))))
+sys.path+=[join(project_path,'CircuitSolver/preprocessor/')]
+from mytopcaller import handler
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -48,15 +57,25 @@ def add_exercise_view(request):
 @parser_classes([MultiPartParser, FormParser,])
 def add_exercise_solver_view(request):
     try:
-        cirpath = request.FILES['cirpath']
-        print(request.data)
-        print(cirpath)
-        print(cirpath.name)
-        print(request.data.get("theme"))
-        data = FormParser().parse(request)
-        #handler(cirpath, request.user.id, request.data.get("theme"), request.data.get("theme"), public, target, freq, unit=None)
-        #return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
-        return JsonResponse({ 'v': True, 'm': "foo" }, safe=False)
+        cir_file = request.FILES['cirpath']
+        cir_file.name=str(request.user.id)+"_"+ ''.join(random.choice(string.ascii_lowercase) for i in range(5))
+        file_path = default_storage.save(cir_file.name, cir_file)
+        ex=handler("api/media/"+file_path, 
+            request.user.id, 
+            [int(i) for i in request.data.get("theme").replace("[","").replace("]","").split(",")], 
+            request.data.get("question"), 
+            request.data.get("public"), 
+            request.data.get("target"), 
+            request.data.get("freq"), 
+            request.data.get("unit") if request.data.get("unit")!=None else None )
+        default_storage.delete(cir_file.name)
+        print(ex)
+        exercise_serializer = ExerciseSerializer(data=ex)
+        if exercise_serializer.is_valid():
+            ex = exercise_serializer.save()
+            return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
+
+        return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
