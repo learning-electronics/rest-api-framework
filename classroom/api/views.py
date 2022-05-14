@@ -23,6 +23,11 @@ def get_classrooms_view(request):
         classrooms_data = list(Classroom.objects.all().values('id', 'name', 'teacher__first_name'))
         
         for i, c in enumerate(Classroom.objects.all()):
+            if request.user in c.students.all() or request.user.id == c.teacher.id:
+                classrooms_data[i]['access'] = True
+            else:
+                classrooms_data[i]['access'] = False
+            
             classrooms_data[i]['students'] = c.students.count()
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
