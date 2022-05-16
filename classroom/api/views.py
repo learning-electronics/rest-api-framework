@@ -182,3 +182,27 @@ def update_classroom_view(request, id):
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Student (user.role==1) can access
+# Only users who are linked to the given classroom can access
+# Receives classroom id trough URL 
+# If successful returns: { "v": True, "m": None}
+# If unsuccessful returns: { "v": False, "m": Error message }
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Student"])
+def exit_classroom_view(request, id):
+    try:
+        classroom = Classroom.objects.get(id=id)
+        classroom.students.remove(request.user)
+        classroom.save_no_pass()
+
+        return JsonResponse({ 'v': True, 'm': None}, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
