@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from account.api.decorators import allowed_users, ownes_exercise
 
 from exercise.models import Exercise, Theme
+from classroom.models import Classroom
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
 from django.core.files.storage import default_storage
 from exercise.api.utils import RULE_CHOICES
@@ -166,7 +167,8 @@ def get_my_exercises_view(request):
     try:
         exercises = Exercise.objects.filter(teacher=request.user.id)
         ids = exercises.values_list('id', flat=True)
-
+        classrooms = Classroom.objects.filter(teacher=request.user.id)
+        
         reloaded_qs = Exercise.objects.all()
         reloaded_qs.query = pickle.loads(pickle.dumps(ids.query))
         exercise_serializer = ExerciseSerializer(exercises, many=True)
@@ -174,6 +176,16 @@ def get_my_exercises_view(request):
         if exercise_serializer.is_valid:
             for val, q in enumerate(reloaded_qs):
                 exercise_serializer.data[val].update(q)
+            
+            # Returns the list of classrooms that the exercise is in
+            for classroom in classrooms:
+                for class_ex in classroom.exercises.all():
+                    ex = next(x for x in exercise_serializer.data if x['id'] == class_ex.id)
+                    if 'visible' in ex:
+                        ex['visible'].append({'id': classroom.id, 'name': classroom.name})
+                    else:
+                        ex['visible'] = [{'id': classroom.id, 'name': classroom.name}]
+
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
  

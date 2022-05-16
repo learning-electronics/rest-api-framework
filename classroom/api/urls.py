@@ -7,6 +7,7 @@ from classroom.api.views import(
     delete_classroom_view,
     enter_classroom_view,
     update_classroom_view,
+    exit_classroom_view
 )
 
 app_name = "classroom"
@@ -19,4 +20,5 @@ urlpatterns = [
     path("classrooms", get_classrooms_view, name="get_classrooms"),
     path("add_classroom", add_classroom_view, name="add_classroom"),
     path("enter_classroom/<int:id>", enter_classroom_view, name="enter_classroom"),
+    path("exit_classroom/<int:id>", exit_classroom_view, name="exit_classroom"),
 ]
