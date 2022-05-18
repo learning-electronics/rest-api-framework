@@ -48,7 +48,7 @@ class AddClassroomSerializer(serializers.ModelSerializer):
     # It takes a json with optional field "name", "password", "students" and "exercises"
     def update(self, instance, validated_data):
         instance.name = validated_data.get("name", instance.name)
-        if "password" in validated_data.keys():
+        if "students" in validated_data.keys():
             instance.students.set(validated_data.get("students", instance.students))
         if "exercises" in validated_data.keys():
             instance.exercises.set(validated_data.get("exercises", instance.exercises))
