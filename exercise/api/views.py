@@ -69,12 +69,11 @@ def add_exercise_solver_view(request):
             request.data.get("freq"), 
             request.data.get("unit") if request.data.get("unit")!=None else None )
         default_storage.delete(cir_file.name)
-        print(ex)
         exercise_serializer = ExerciseSerializer(data=ex)
         if exercise_serializer.is_valid():
             ex = exercise_serializer.save()
             return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
-
+        
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
