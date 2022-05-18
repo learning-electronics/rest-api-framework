@@ -27,8 +27,11 @@ urlpatterns = [
     # Exercise URLS
     path("exercise/api/", include("exercise.api.urls", "exercise_api")),
 
-    # Classes URLS
+    # Classroom URLS
     path("classroom/api/", include("classroom.api.urls", "classroom_api")),
+
+    # Exam URLS
+    path("exam/api/", include("exam.api.urls", "exam_api")),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
