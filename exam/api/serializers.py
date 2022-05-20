@@ -1,9 +1,8 @@
 import base64
 from rest_framework import serializers
-from exam.models import Exam
-from account.models import Account
-from exercise.api.serializers import ExerciseSerializer
+from exam.models import Exam, Marks
 from exercise.models import Exercise
+from django.http.response import JsonResponse
 
 class ExerciseInfo(serializers.RelatedField):
     img = serializers.ImageField(allow_null=True, required=False)
@@ -17,7 +16,7 @@ class ExerciseInfo(serializers.RelatedField):
             "ans3",
             "correct",
             "unit",
-            "img"
+            "img",
         ]
 
     def to_representation(self, instance):
@@ -28,15 +27,23 @@ class ExerciseInfo(serializers.RelatedField):
             "ans2": instance.ans2,
             "ans3": instance.ans3,
             "correct": instance.correct,
-            "unit": instance.unit,
+            "unit": instance.unit 
         }
         try:
-                info["img"]=instance.img.url
-                #info["img"]=base64.b64encode(instance.img.read()) if instance.img != None else None
+            info["img"]=instance.img.url
         except:
-                info["img"]=None
+            info["img"]=None
         
         return info
+
+class MarkSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Marks
+        fields = [
+            "exercise",
+            "mark"
+        ]
 
 # Serializer used to pass the exam trough the rest api to the front with the purpose of the students to see the exam 
 class StudentExamSerializer(serializers.ModelSerializer):
@@ -49,24 +56,7 @@ class StudentExamSerializer(serializers.ModelSerializer):
             "exercises",
         ]
 
-# Serializers used to create/update exam objects
-class AddExamSerializer(serializers.ModelSerializer):
-    public = serializers.BooleanField(allow_null=True, required=False)
-
-    class Meta: 
-        model = Exam
-        fields = [ 
-                "name",
-                "teacher",
-                "exercises",
-                "classrooms",
-                "marks",
-                "password",
-                "public"
-            ]
-        extra_kwargs = { 'password': {"write_only":True} }
-
-    # Updates an already existing exam object
+"""    # Updates an already existing exam object
     # It takes a json with optional field "name", "marks", "exercises", "classrooms" and "password"
     def update(self, instance, validated_data):
         print("UPDATE")
@@ -89,18 +79,82 @@ class AddExamSerializer(serializers.ModelSerializer):
         exam = Exam(
                 name    = self.validated_data["name"],
                 teacher = self.validated_data["teacher"],
-                marks   = self.validated_data["marks"],
+                password= self.validated_data["password"]
             )
-
-        if "password" in self.validated_data.keys():
-            exam.password=self.validated_data["password"]
 
         if "public" in self.validated_data.keys():
             exam.public=self.validated_data["public"]
 
+        print("1")
         exam.save_with_pass()
+        print("2")
         if "classrooms" in self.validated_data.keys():
             exam.classrooms.set(self.validated_data["classrooms"])
+        print("2.5")
+        print(self.validated_data)
+        print("2.6")
         exam.exercises.set(self.validated_data["exercises"])
+        print("3")
         exam.save_no_pass()
-        return exam
+        print("4")
+        return exam """
+
+#Serializers used to create/update relation between an exam and an exercise
+class AddMarkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Marks
+        fields = [
+            "exam",
+            "exercise",
+            "mark"
+        ]
+
+    def save(self):
+        mark = Marks(
+                exam = self.validated_data["exam"],
+                exercise = self.validated_data["exercise"],
+                mark = self.validated_data["mark"]
+            )
+        mark.save()
+        return mark
+
+# Serializers used to create/update exam objects
+class AddExamSerializer(serializers.ModelSerializer):
+    public = serializers.BooleanField(allow_null=True, required=False)
+
+    class Meta: 
+        model = Exam
+        fields = [ 
+                "name",
+                "teacher",
+                "exercises",
+                "classrooms",
+                "password",
+                "public"
+            ]
+        extra_kwargs = { 'password': {"write_only":True} }
+
+    def save(self, exercises):
+            exam = Exam(
+                    name    = self.validated_data["name"],
+                    teacher = self.validated_data["teacher"],
+                    password= self.validated_data["password"]
+                )
+
+            if "public" in self.validated_data.keys():
+                exam.public=self.validated_data["public"]
+
+            exam.save_with_pass()
+            if "classrooms" in self.validated_data.keys():
+                exam.classrooms.set(self.validated_data["classrooms"])
+
+            for dict in exercises:
+                dict["exam"]=exam.id
+                newMark = AddMarkSerializer(data=dict)
+                if newMark.is_valid():
+                    newMark.save()
+                else:
+                    exam.delete()
+                    return JsonResponse({ 'v': False, 'm': newMark.errors }, safe=False)
+            exam.save_no_pass()
+            return exam

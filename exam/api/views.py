@@ -7,7 +7,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from account.api.decorators import allowed_users
 
-from exam.models import Exam
+from exam.models import Exam, Marks
 from exam.api.serializers import AddExamSerializer, StudentExamSerializer
 from passlib.hash import django_pbkdf2_sha256
 
@@ -19,10 +19,10 @@ def add_exam_view(request):
     try:
         exam_data = JSONParser().parse(request)
         exam_data["teacher"] = request.user.id
-        exam_serializer = AddExamSerializer(data=exam_data) 
 
+        exam_serializer = AddExamSerializer(data=exam_data)
         if exam_serializer.is_valid():
-            exam = exam_serializer.save()
+            exam = exam_serializer.save(exercises=exam_data["exercises"])
             return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exam_serializer.errors }, safe=False)
@@ -49,8 +49,14 @@ def student_exam_view(request, id):
         if not django_pbkdf2_sha256.verify(data["password"], exam.password):
             return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
     
-        exam_serializer = StudentExamSerializer(Exam.objects.get(id=id))
-        return JsonResponse(exam_serializer.data, safe=False)
+        exam_data = StudentExamSerializer(exam).data
+        print(Marks.objects.filter(exam=exam.id).values('exercise', 'mark'))
+        for mark in Marks.objects.filter(exam=exam.id).values('exercise', 'mark'):
+            for exercise in exam_data["exercises"]:
+                if exercise["id"] == mark["exercise"]:
+                    exercise["mark"] = float(mark["mark"])
+        print(exam_data)
+        return JsonResponse(exam_data, safe=False)
     except TypeError as e:
         return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
     except BaseException as e:

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from exam.models import Exam
+from exam.models import Exam, Marks
 
 class ExamAdmin(admin.ModelAdmin):
     list_display = ("name", "id", "teacher", "classrooms_list", "date_created")
@@ -16,3 +16,4 @@ class ExamAdmin(admin.ModelAdmin):
 
 # Register your models here.
 admin.site.register(Exam, ExamAdmin)
+admin.site.register(Marks)
