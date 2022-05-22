@@ -167,24 +167,18 @@ def get_my_exercises_view(request):
     try:
         exercises = Exercise.objects.filter(teacher=request.user.id)
         ids = exercises.values_list('id', flat=True)
-        classrooms = Classroom.objects.filter(teacher=request.user.id)
         
         reloaded_qs = Exercise.objects.all()
         reloaded_qs.query = pickle.loads(pickle.dumps(ids.query))
         exercise_serializer = ExerciseSerializer(exercises, many=True)
 
         if exercise_serializer.is_valid:
-            for val, q in enumerate(reloaded_qs):
-                exercise_serializer.data[val].update(q)
-            
-            # Returns the list of classrooms that the exercise is in
-            for classroom in classrooms:
-                for class_ex in classroom.exercises.all():
-                    ex = next(x for x in exercise_serializer.data if x['id'] == class_ex.id)
-                    if 'visible' in ex:
-                        ex['visible'].append({'id': classroom.id, 'name': classroom.name})
-                    else:
-                        ex['visible'] = [{'id': classroom.id, 'name': classroom.name}]
+            for exercise in exercise_serializer.data:
+                if Classroom.objects.filter(exercises__id=exercise["id"]).exists():
+                    lst = []
+                    for classroom in Classroom.objects.filter(exercises__id=exercise["id"]):
+                        lst.append({'id': classroom.id, 'name': classroom.name})
+                    exercise['visible'] = lst
 
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
@@ -254,3 +248,36 @@ def get_exercises_by_theme_view(request, id):
 		return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 	
 	return JsonResponse(exercise_serializer.data, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+def associate_classroom_view(request, id):
+    data = JSONParser().parse(request)
+    txt = ""
+    try:
+        for class_id in data["class"]:
+            if request.user == Classroom.objects.get(id=class_id).teacher:
+                Classroom.objects.get(id=class_id).exercises.add(id)
+            else:
+                txt += "You are not the teacher of the classroom " + Classroom.get(id=class_id).name + "\n"
+
+        return JsonResponse({ 'v': True, 'm': txt }, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+def desassociate_classroom_view(request, id):
+    data = JSONParser().parse(request)
+    try:
+        for class_id in data["class"]:
+            if request.user == Classroom.objects.get(id=class_id).teacher:
+                Classroom.objects.get(id=class_id).exercises.remove(id)
+
+        return JsonResponse({ 'v': True, 'm': None }, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)

@@ -10,6 +10,8 @@ from exercise.api.views import(
     get_my_exercises_view,
     get_exercises_by_theme_view,
     add_exercise_solver_view,
+    associate_classroom_view,
+    desassociate_classroom_view,
 )
 
 app_name = "exercise"
@@ -17,6 +19,8 @@ app_name = "exercise"
 urlpatterns = [
     path("add_exercise", add_exercise_view, name="add_exercise"),
     path("add_exercise_solver", add_exercise_solver_view, name="add_exercise_solver"),
+    path("associate_classroom/<int:id>", associate_classroom_view, name="associate_with_classroom"),
+    path("desassociate_classroom/<int:id>", desassociate_classroom_view, name="desassociate_with_classroom"),  
     path("update_ex_img/<int:id>", update_exercise_img_view, name="update_ex_img"),
     path("themes", get_themes_view, name="themes"),
     path("units", get_units_view, name="units"),
