@@ -14,6 +14,7 @@ class Exam(models.Model):
     date_created= models.DateField(verbose_name="date created", auto_now=True)
     password    = models.CharField(('password'), max_length=128)
     public      = models.BooleanField(verbose_name="public", default=True)
+    deduct      = models.BooleanField(verbose_name="deduct", default=False)
 
     # hashes the password and saves the instance
     def save_with_pass(self, *args, **kwargs):
@@ -28,3 +29,6 @@ class Marks(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="exam", related_name='exam')
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, verbose_name="exercise", related_name='exercise')
     mark = models.DecimalField(verbose_name="mark", max_digits=4, decimal_places=2, default=0.0)
+
+    class Meta:
+        unique_together = (('exam', 'exercise'),)
