@@ -1,4 +1,3 @@
-import imghdr
 from rest_framework import serializers
 from exercise.models import Exercise, Theme
 
@@ -66,9 +65,9 @@ class ExerciseSerializer(serializers.ModelSerializer):
             "public": instance.public
         }
         try:
-                info["img"]=instance.img.url
+                info["img"] = instance.img.url
         except:
-                info["img"]=None
+                info["img"] = None
         return info
 
 class ThemeSerializer(serializers.ModelSerializer):

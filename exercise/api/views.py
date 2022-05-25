@@ -21,14 +21,14 @@ import random, string
 from os.path import abspath,realpath,dirname,join
 import sys
 import os
-project_path=dirname(dirname(dirname(dirname(realpath(__file__)))))
-sys.path+=[join(project_path,'CircuitSolver/preprocessor/')]
+project_path = dirname(dirname(dirname(dirname(realpath(__file__)))))
+sys.path += [join(project_path,'CircuitSolver/preprocessor/')]
 from mytopcaller import handler
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
-# Receives a JSON with the following fields "theme", "question", "ans1", "ans2", "ans3", "correct", "unit" and optional "resol"(String) and "public"(Bool)
-# If sucessfull updates user data and returns: { "v": True, "m": None }
+# Receives a JSON with the following fields "theme", "question", "ans1", "ans2", "ans3", "correct", "unit", "visible" and optional "resol"(String) and "public"(Bool) 
+# If sucessfull updates user data and returns: { "v": True, "m": ex.id }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["POST", ])
@@ -42,10 +42,21 @@ def add_exercise_view(request):
 
         if exercise_serializer.is_valid():
             ex = exercise_serializer.save()
+
+            if exercise_data["public"] == False and 'visible' in exercise_data:
+                for class_id in exercise_data["visible"]:
+                    if request.user == Classroom.objects.get(id=class_id).teacher:
+                        Classroom.objects.get(id=class_id).exercises.add(ex.id)
+                    else:
+                        # This error should never happen from the frontend
+                        raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+
             return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except ValidationError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
@@ -198,7 +209,7 @@ def delete_exercise_view(request, id):
     try:
         Exercise.objects.filter(id=id).delete()
     except BaseException as e:
-        return JsonResponse({ 'v': False, 'm': ValidationError(str(e)) }, safe=False)
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
@@ -227,16 +238,35 @@ def update_exercise_view(request, id):
             exercise.img = saved_img
             exercise.save()
 
+            if 'visible' in exercise_data:
+                # Add the new classrooms
+                for class_id in exercise_data["visible"]:
+                    if request.user == Classroom.objects.get(id=class_id).teacher:
+                        Classroom.objects.get(id=class_id).exercises.add(id)
+                    else:
+                        # This error should never happen from the frontend
+                        raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+
+                # Remove the old classrooms
+                for class_id in list(set(Classroom.objects.filter(exercises__id=id).values_list('id', flat=True)) - set(exercise_data["visible"])):
+                    if request.user == Classroom.objects.get(id=class_id).teacher:
+                        Classroom.objects.get(id=class_id).exercises.remove(id)
+                    else:
+                        raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+
+                            # This error should never happen from the frontend
             return JsonResponse({ 'v': True, 'm': None}, safe=False)
         
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except ValidationError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
-     
+
 @csrf_exempt
 @api_view(["GET", ])
 @permission_classes([AllowAny])
@@ -254,10 +284,11 @@ def get_exercises_by_theme_view(request, id):
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher"])
 def associate_classroom_view(request, id):
-    data = JSONParser().parse(request)
     txt = ""
     try:
-        for class_id in data["class"]:
+        data = JSONParser().parse(request)
+
+        for class_id in data["visible"]:
             if request.user == Classroom.objects.get(id=class_id).teacher:
                 Classroom.objects.get(id=class_id).exercises.add(id)
             else:
