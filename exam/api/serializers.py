@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from exam.models import Exam, Marks
+from exam.models import Exam, Marks, SubmittedExam
 from exercise.models import Exercise
 from django.http.response import JsonResponse
 
@@ -44,6 +44,20 @@ class MarkSerializer(serializers.ModelSerializer):
             "mark"
         ]
 
+# Serializer used to plass the exam trough the rest api to the front with the purpose of the professor to see the exam info
+class ProfessorExamSerializer(serializers.ModelSerializer):
+    exercises= ExerciseInfo(many=True, read_only=True)
+    class Meta:
+        model = Exam
+        fields = [
+            "name",
+            "public",
+            "deduct",
+            "date_created",
+            "exercises",
+            "timer",
+        ]
+
 # Serializer used to pass the exam trough the rest api to the front with the purpose of the students to see the exam 
 class StudentExamSerializer(serializers.ModelSerializer):
     exercises= ExerciseInfo(many=True, read_only=True)
@@ -53,6 +67,7 @@ class StudentExamSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "exercises",
+            "timer",
         ]
 
 #Serializers used to create/update relation between an exam and an exercise
@@ -74,11 +89,42 @@ class AddMarkSerializer(serializers.ModelSerializer):
         mark.save()
         return mark
 
+# Serializers used to create SubmittedExam objects
+class AddSubmittedExamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubmittedExam
+        fields = [
+            "submitted_exam",
+            "student",
+            "answers",
+            "final_mark",
+        ]
+
+    def save(self):
+        submitted_exam = SubmittedExam(
+                submitted_exam = self.validated_data["submitted_exam"],
+                student = self.validated_data["student"],
+                answers = self.validated_data["answers"],
+                final_mark = self.validated_data["final_mark"],
+            )
+        submitted_exam.save()
+        return submitted_exam
+
+    def validate(self, data):
+        if len(data["answers"].keys()) != Marks.objects.filter(exam=data["submitted_exam"]).count():   
+            raise serializers.ValidationError("The number of answers is not the same as the number of exercises")
+        for key in data["answers"].keys():
+            if not Exercise.objects.filter(id=key).exists():
+                raise serializers.ValidationError("The exercise with id {} does not exist".format(key))
+            if not Marks.objects.filter(exam=data["submitted_exam"], exercise__id=key).exists():
+                raise serializers.ValidationError("The exercise with id {} is not in the exam".format(key))
+        return data
+
 # Serializers used to create/update exam objects
 class AddExamSerializer(serializers.ModelSerializer):
     public = serializers.BooleanField(allow_null=True, required=False) 
-    deduct = serializers.BooleanField(allow_null=True, required=False)
-
+    deduct = serializers.DecimalField(allow_null=True, required=False, max_digits=4, decimal_places=2)
+    timer  = serializers.CharField(max_length=5, allow_null=True, required=False)
     class Meta: 
         model = Exam
         fields = [ 
@@ -87,7 +133,8 @@ class AddExamSerializer(serializers.ModelSerializer):
                 "classrooms",
                 "password",
                 "public",
-                "deduct"
+                "deduct",
+                "timer",
             ]
         extra_kwargs = { 'password': {"write_only":True} }
 
@@ -102,7 +149,10 @@ class AddExamSerializer(serializers.ModelSerializer):
                 exam.public=self.validated_data["public"]
 
             if "deduct" in self.validated_data.keys():
-                exam.public=self.validated_data["deduct"]
+                exam.deduct=self.validated_data["deduct"]
+
+            if "timer" in self.validated_data.keys():
+                exam.timer=self.validated_data["timer"]
 
             exam.save_with_pass()
             if "classrooms" in self.validated_data.keys():
@@ -130,7 +180,6 @@ class AddExamSerializer(serializers.ModelSerializer):
             try:
                 for dict in exercises:
                     obj_mark, in_db = Marks.objects.get_or_create(exam=instance, exercise=Exercise.objects.get(id=dict["exercise"]))
-                    print(obj_mark, in_db)
                     if in_db:
                         exercises_new_pk.append(dict["exercise"])
                     else:
@@ -140,7 +189,6 @@ class AddExamSerializer(serializers.ModelSerializer):
                     obj_mark.save() 
                 Marks.objects.filter(exam=instance).exclude(exercise__in=exercises_new_pk+exercises_old_pk).delete()
             except BaseException as e:
-                print("cagada")
                 Marks.objects.filter(exam=instance, exercise__in=exercises_new_pk).delete()
                 for exercise_pk in exercises_old_pk:
                     Marks.objects.get(exam=instance, exercise=exercise_pk).mark = exercises_old_marks[exercises_old_pk.index(exercise_pk)]
@@ -153,6 +201,8 @@ class AddExamSerializer(serializers.ModelSerializer):
             instance.public=self.validated_data["public"]
         if "deduct" in self.validated_data.keys():
             instance.deduct=self.validated_data["deduct"]
+        if "timer" in self.validated_data.keys():
+            instance.timer=self.validated_data["timer"]    
         if "password" in validated_data.keys():
             instance.password = validated_data.get("password", instance.password)
             instance.save_with_pass()

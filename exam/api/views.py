@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
@@ -8,12 +9,12 @@ from rest_framework.permissions import IsAuthenticated
 from account.api.decorators import allowed_users, my_classroom, ownes_exam
 
 from exam.models import Exam, Marks
-from exam.api.serializers import AddExamSerializer, StudentExamSerializer
+from exam.api.serializers import AddExamSerializer, StudentExamSerializer, ProfessorExamSerializer, AddSubmittedExamSerializer
 from passlib.hash import django_pbkdf2_sha256
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
-# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": bool, "date_created": date, "number_of_exercises": int}, ... } 
+# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string}, ... } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -22,7 +23,7 @@ from passlib.hash import django_pbkdf2_sha256
 @allowed_users(["Teacher"])
 def get_professor_exams_view(request):
     try:
-        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created'))
+        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
         
@@ -33,19 +34,67 @@ def get_professor_exams_view(request):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Teacher (user.role==2) can access
+# If sucessfull returns: {
+#    "name": "exam47",
+#    "public": bool,
+#    "deduct": decimal(4,2),
+#    "date_created": "2022-05-25",
+#    "exercises": [
+#        {
+#            "id": 1,
+#            "question": "q1",
+#            "ans1": "a1",
+#            "ans2": "a2",
+#            "ans3": "a3",
+#            "correct": "ca",
+#            "unit": "V",
+#            "img": null,
+#            "mark": 7.0
+#        },
+#        ...],
+#    "timer": "02:00"(string),
+#    "number_of_exercises": int,
+#    "classrooms": [
+#        {
+#            "classroom_id": "classroom_name"
+#        }, 
+#        ...]
+#}  
+# If unsuccessful returns: { "v": False, "m": Error message } 
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@ownes_exam()
+def get_professor_exam_info_view(request, id):
+    try:
+        exam = Exam.objects.get(id=id)
+        exam_data = ProfessorExamSerializer(exam).data
+        exam_data["classrooms"] = [ {classroom.id : classroom.name} for classroom in exam.classrooms.all()]
+        #adds the mark for the exercise to the serialized exercises
+        for mark in Marks.objects.filter(exam=exam.id).values('exercise', 'mark'):
+            for exercise in exam_data["exercises"]:
+                if exercise["id"] == mark["exercise"]:
+                    exercise["mark"] = float(mark["mark"])
+                    break
+        return JsonResponse(exam_data, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
 # Receives a JSON with the following fields:{
 #    "name": "name_of:exam",
-#    "exercises" : [{"exercise": ex_id, "mark":float(mark)},
+#    "exercises" : [{"exercise": ex_id, "mark":float(mark)},    NOTE: mark value between 0 and 20
 #                   {"exercise":ex_id, "mark":float(mark)}, ...],
 #    "password":"pwd_to_enter_test" ,
 #    "classrooms":[class_id1, class_id2, ....],
-#    "public":0 
-#    "deduct":0
+#    "public": boolean 
+#    "deduct": decimal(4, 2) between 0 and 100 (is a percentage)
 #} 
-# NOTE: OPTIONAL FIELDS: "classroom", "public"(default=True), "deduct"(default=False)
+# NOTE: OPTIONAL FIELDS: "classroom", "public"(default=True), "deduct"(default=0.0)
 # Creates a new exam object
 # If successful returns: { "v": True, "m": <int> exam.id }
 # If unsuccessful returns: { "v": False, "m": Error message }
@@ -60,7 +109,7 @@ def add_exam_view(request):
 
         exam_serializer = AddExamSerializer(data=exam_data)
         if exam_serializer.is_valid():
-            exam = exam_serializer.save(exercises=exam_data["exercises"])
+            exam = exam_serializer.save(exercises=exam_data["exercises"]) 
             return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exam_serializer.errors }, safe=False)
@@ -101,9 +150,9 @@ def delete_exam_view(request, id):
 #    "exercises" : [{"exercise":1, "mark":10},
 #                   {"exercise":2, "mark":10}, ...],
 #    "password":"pass",
-#    "classrooms":[],
-#    "public":0
-#    "deduct":0
+#    "classrooms":[id_classroom1, id_classroom2, ...],
+#    "public": boolean
+#    "deduct": decimal(4, 2)
 #}
 # NOTE: all the fields are optional, if keyword "exercises" is present it must follow the structure above 
 # If successful returns: { "v": True, "m": None}
@@ -116,9 +165,7 @@ def delete_exam_view(request, id):
 def update_exam_view(request, id):
     try:
         exam = Exam.objects.get(id=id)
-        print("exam", exam)
         exam_data = JSONParser().parse(request)
-        print("exam_data", exam_data)
         exam_serializer = AddExamSerializer(instance=exam, data=exam_data, partial=True)
         
         if exam_serializer.is_valid():
@@ -204,5 +251,25 @@ def student_exam_view(request, id):
         return JsonResponse(exam_data, safe=False)
     except TypeError as e:
         return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
+
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Student"])
+def submit_exam_view(request, id):
+    data = JSONParser().parse(request)
+    try:
+        data["submitted_exam"] = id
+        data["student"] = request.user.id
+        data["exam_token"] = str(request.user.id)+"$$"+str(id)+"&&"+str(datetime.now())
+        submited_exam_serializer = AddSubmittedExamSerializer(data=data)
+        if submited_exam_serializer.is_valid():
+            submited_exam_serializer.validate(data=data)
+            exam = submited_exam_serializer.save() 
+            return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
+        return JsonResponse({ 'v': False, 'm': submited_exam_serializer.errors}, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)

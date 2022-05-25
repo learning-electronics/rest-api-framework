@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.core.validators import validate_email
 
 
 # Manages the creations of users (normal users and superusers)
@@ -74,7 +75,7 @@ class Account(AbstractBaseUser):
 
     role        = models.PositiveSmallIntegerField(choices=RULE_CHOICES)
     id          = models.AutoField(verbose_name="id", primary_key=True)
-    email       = models.EmailField(verbose_name="email", max_length=120, unique=True)
+    email       = models.EmailField(verbose_name="email", max_length=120, unique=True, validators=[validate_email])
     first_name  = models.CharField(verbose_name="first name", max_length=45)
     last_name   = models.CharField(verbose_name="last name", max_length=45)
     birth_date  = models.DateField(verbose_name="birth date")
