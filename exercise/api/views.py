@@ -69,9 +69,10 @@ def add_exercise_view(request):
 def add_exercise_solver_view(request):
     try:
         cir_file = request.FILES['cirpath']
-        cir_file.name=str(request.user.id)+"_"+ ''.join(random.choice(string.ascii_lowercase) for i in range(5))
+        cir_file.name = str(request.user.id) + "_" + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
         file_path = default_storage.save(cir_file.name, cir_file)
-        ex=handler("api/media/"+file_path, 
+
+        ex = handler("api/media/" + file_path, 
             request.user.id, 
             [int(i) for i in request.data.get("theme").replace("[","").replace("]","").split(",")], 
             request.data.get("question"), 
@@ -79,10 +80,20 @@ def add_exercise_solver_view(request):
             request.data.get("target"), 
             request.data.get("freq"), 
             request.data.get("unit") if request.data.get("unit")!=None else None )
+
         default_storage.delete(cir_file.name)
         exercise_serializer = ExerciseSerializer(data=ex)
         if exercise_serializer.is_valid():
             ex = exercise_serializer.save()
+
+            if request.data.get("public") == 'false' and 'visible' in request.data:
+                for class_id in [int(i) for i in request.data.get("visible").split(",")]:
+                    if request.user == Classroom.objects.get(id=class_id).teacher:
+                        Classroom.objects.get(id=class_id).exercises.add(ex.id)
+                    else:
+                        # This error should never happen from the frontend
+                        raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+                        
             return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
         
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
