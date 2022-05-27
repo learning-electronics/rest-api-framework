@@ -2,13 +2,15 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
+from classroom.models import Classroom
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
-from account.api.decorators import allowed_users, my_classroom, ownes_exam
+from account.api.decorators import allowed_users, my_classroom, ownes_exam, my_classroom_exam
 
-from exam.models import Exam, Marks
+from account.models import Account
+from exam.models import Exam, Marks, SubmittedExam
 from exam.api.serializers import AddExamSerializer, StudentExamSerializer, ProfessorExamSerializer, AddSubmittedExamSerializer
 from passlib.hash import django_pbkdf2_sha256
 
@@ -190,6 +192,7 @@ def update_exam_view(request, id):
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
 @my_classroom()
+@allowed_users(["Student", "Teacher"])
 def get_classroom_exams_view(request, id):
     try:
         exams_data = list(Exam.objects.filter(classrooms__id=id, public=True).values('id', 'name', 'teacher__first_name'))
@@ -227,11 +230,11 @@ def get_classroom_exams_view(request, id):
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Student"])
-#@my_classroom()
-def student_exam_view(request, id):
+@my_classroom_exam()
+def student_exam_view(request, id_classroom, id_exam):
     data = JSONParser().parse(request)
     try:
-        exam = Exam.objects.get(id=id)
+        exam = Exam.objects.get(id=id_exam)
 
         # Can't use built in funtcion check_password function to check classroom password
         # this function is from passlib.hash and checks if the given secret (aka data["password"]) 
@@ -254,22 +257,97 @@ def student_exam_view(request, id):
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
 
-
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Student (user.role==1) can access
+# Receives exam id trough URL
+# Receives JSON with the fields:{
+#    "final_mark":16.90,
+#    "answers":{ ex_id: answer,
+#                ex_id: answer,
+#                ex_id: answer
+#    }
+#}
+# If successful returns: {"v": true, "m": exam.id}
+# If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Student"])
-def submit_exam_view(request, id):
+@my_classroom_exam()
+def submit_exam_view(request, id_classroom, id_exam):
     data = JSONParser().parse(request)
     try:
-        data["submitted_exam"] = id
+        data["submitted_exam"] = id_exam
+        data["exam_classroom"] = id_classroom
         data["student"] = request.user.id
         data["exam_token"] = str(request.user.id)+"$$"+str(id)+"&&"+str(datetime.now())
         submited_exam_serializer = AddSubmittedExamSerializer(data=data)
+        print("1")
         if submited_exam_serializer.is_valid():
             submited_exam_serializer.validate(data=data)
-            exam = submited_exam_serializer.save() 
+            exam = submited_exam_serializer.save()
             return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
         return JsonResponse({ 'v': False, 'm': submited_exam_serializer.errors}, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
+
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Teacher (user.role==2) can access
+# Returns the students and their marks for the exam
+# If sucessfull returns [
+#    {
+#        "student": "student.id student.first_name student.last_name",
+#        "final_mark": "decimal(4,2)"
+#        "classroom_id": "classroom_id classroom_name",
+#    },
+#    ...]
+# If no student submitted the exam returns empty list
+# If unsuccessful returns: { "v": False, "m": Error message }
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@ownes_exam()
+def get_exam_final_marks_view(request, id):
+    try:
+        lst=[]
+        for object in SubmittedExam.objects.filter(submitted_exam__id=id).values('student', 'final_mark', 'exam_classroom'):
+            if object['exam_classroom']:
+                lst.append({ 
+                    "student": str(object["student"])+" "+str(Account.objects.get(id=object["student"]).first_name)+" "+str(Account.objects.get(id=object["student"]).last_name),
+                    "final_mark": object['final_mark'],
+                    "classroom_id": str(object['exam_classroom'])+" "+str(Classroom.objects.get(id=object['exam_classroom']).name)
+                })
+        return JsonResponse(lst, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)
+
+# Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
+# Only users who have the role Teacher (user.role==2) can access
+# Returns the students and their marks for the exam
+# If sucessfull returns [
+#    {
+#        "student": "student.id student.first_name student.last_name",
+#        "final_mark": "decimal(4,2)"
+#        "exam_id": "classroom_id classroom_name",
+#    },
+#    ...]
+# If no student submitted the exam returns empty list
+# If unsuccessful returns: { "v": False, "m": Error message }
+@csrf_exempt
+@api_view(["GET", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@my_classroom()
+def get_classroom_exams_final_marks_view(request, id):
+    try:
+        lst=[]
+        for object in SubmittedExam.objects.filter(exam_classroom_id=id).values('student', 'final_mark', 'submitted_exam'):
+            lst.append({ 
+                "student": str(object["student"])+" "+str(Account.objects.get(id=object["student"]).first_name)+" "+str(Account.objects.get(id=object["student"]).last_name),
+                "final_mark": object['final_mark'],
+                "exam_id": str(object['submitted_exam'])+" "+str(Exam.objects.get(id=object['submitted_exam']).name)
+            })
+        return JsonResponse(lst, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e)}, safe=False)

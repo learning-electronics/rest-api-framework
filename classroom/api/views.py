@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
+from exam.api.serializers import ProfessorExamSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import JSONParser
@@ -18,6 +19,7 @@ from passlib.hash import django_pbkdf2_sha256
 @csrf_exempt
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
+@allowed_users(["Teacher", "Student"])
 def get_classrooms_view(request):
     try:
         classrooms_data = list(Classroom.objects.all().values('id', 'name', 'teacher__first_name'))
@@ -41,6 +43,8 @@ def get_classrooms_view(request):
 @csrf_exempt
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
+@allowed_users(["Teacher", "Student"])
+@my_classroom()
 def get_my_classrooms_view(request):
     try:
         if request.user.role == 1:
@@ -60,22 +64,28 @@ def get_my_classrooms_view(request):
 #   "name": <string> class_name,
 #   "teacher": <string> "teacher_id : "teacher__first_name teacher__last_name",
 #   "students": <List<String>> [ "1 : Tiago Marques" ]
+#   "exercises": ExerciseSerializer
+#   "exams": ProfessorExamSerializer
 #   }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
+@allowed_users(["Teacher", "Student"])
 @my_classroom()
 def get_info_classroom_view(request, id):
     try:
-        classrooms_serializer = ClassroomSerializer(Classroom.objects.get(id=id))
-        return JsonResponse(classrooms_serializer.data, safe=False)
+        classroom_data = ClassroomSerializer(Classroom.objects.get(id=id)).data
+        if request.user.role==2:
+            classroom_data['exams'] = ProfessorExamSerializer(Classroom.objects.get(id=id).exams.all(), many=True).data
+        return JsonResponse(classroom_data, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
 # Receives a JSON with the following fields "name" and "password"
+# OPTIONAL FIELDS: "students", "exams", "exercises"
 # Creates a new classroom object
 # If successful returns: { "v": True, "m": <int> classroom.id }
 # If unsuccessful returns: { "v": False, "m": Error message }
@@ -193,6 +203,7 @@ def update_classroom_view(request, id):
 @api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Student"])
+@my_classroom()
 def exit_classroom_view(request, id):
     try:
         classroom = Classroom.objects.get(id=id)

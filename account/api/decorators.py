@@ -68,3 +68,23 @@ def my_classroom():
                 return JsonResponse({ 'v': False, 'm': "Not your classroom" }, safe=False)
         return wrapper_func
     return decorator
+
+# Checks if the classroom and the exam are associated
+# If sucessfull it returns (allows) the user to access the view_func
+# If unsuccessful returns: { "v": False, "m": Error message } 
+def my_classroom_exam():
+    def decorator(view_func):
+        def wrapper_func(request, *args, **kwargs):
+            if not Classroom.objects.filter(id=kwargs['id_classroom']).exists():
+                return JsonResponse({ 'v': False, 'm': "Doesn't Exist" }, safe=False)
+
+            if not Exam.objects.filter(id=kwargs['id_exam']).exists():
+                if Exam.objects.get(id=kwargs['id_exam']).public==False:
+                    return JsonResponse({ 'v': False, 'm': "Doesn't Exist" }, safe=False)
+
+            if not Exam.objects.filter(id=kwargs['id_exam'], classrooms__id=kwargs['id_classroom']).exists():
+                return JsonResponse({ 'v': False, 'm': "Not Associated" }, safe=False)
+
+            return view_func(request, *args, **kwargs)
+        return wrapper_func
+    return decorator

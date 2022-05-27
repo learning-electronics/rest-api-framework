@@ -40,6 +40,7 @@ class Marks(models.Model):
 
 class SubmittedExam(models.Model):
     student = models.ForeignKey(Account, on_delete=models.CASCADE, verbose_name="student", related_name='student')
+    exam_classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, verbose_name="exam classroom", related_name='exam_classroom', null=True, blank=True)
     submitted_exam = models.ForeignKey(Exam, on_delete=models.CASCADE, verbose_name="submitted exam", related_name='exam')
     final_mark = models.DecimalField(verbose_name="final mark", max_digits=4, decimal_places=2, validators=MARK_VALIDATOR)
     answers = models.JSONField(verbose_name="answers")

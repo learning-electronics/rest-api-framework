@@ -2,6 +2,7 @@ from rest_framework import serializers
 from account.models import Account
 from classroom.models import Classroom
 from exercise.api.serializers import ExerciseSerializer
+from exam.api.serializers import ProfessorExamSerializer
 
 class AccountInfo(serializers.RelatedField):
     class Meta:
@@ -20,6 +21,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
     students = AccountInfo(allow_null=True, many=True, read_only=True, required=False)
     teacher  = AccountInfo(allow_null=True, read_only=True)
     exercises= ExerciseSerializer(allow_null=True, many=True, read_only=True, required=False)
+    exams    = ProfessorExamSerializer(allow_null=True, many=True, read_only=True, required=False)
 
     class Meta:
         model = Classroom
@@ -29,6 +31,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
                 "teacher",
                 "students",
                 "exercises",
+                "exams",
             ]
             
 # Serializers used to create/update classroom objects
@@ -41,6 +44,7 @@ class AddClassroomSerializer(serializers.ModelSerializer):
                 "password",
                 "students",
                 "exercises",
+                "exams"
             ]
         extra_kwargs = { 'password': {"write_only":True} }
 
@@ -52,6 +56,8 @@ class AddClassroomSerializer(serializers.ModelSerializer):
             instance.students.set(validated_data.get("students", instance.students))
         if "exercises" in validated_data.keys():
             instance.exercises.set(validated_data.get("exercises", instance.exercises))
+        if "exams" in validated_data.keys():
+            instance.exams.set(validated_data.get("exams", instance.exams))
         if "password" in validated_data.keys():
             instance.password = validated_data.get("password", instance.password)
             instance.save()

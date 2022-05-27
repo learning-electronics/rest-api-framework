@@ -1,3 +1,4 @@
+from classroom.models import Classroom
 from rest_framework import serializers
 from exam.models import Exam, Marks, SubmittedExam
 from exercise.models import Exercise
@@ -95,6 +96,7 @@ class AddSubmittedExamSerializer(serializers.ModelSerializer):
         model = SubmittedExam
         fields = [
             "submitted_exam",
+            "exam_classroom",
             "student",
             "answers",
             "final_mark",
@@ -103,6 +105,7 @@ class AddSubmittedExamSerializer(serializers.ModelSerializer):
     def save(self):
         submitted_exam = SubmittedExam(
                 submitted_exam = self.validated_data["submitted_exam"],
+                exam_classroom = self.validated_data["exam_classroom"],
                 student = self.validated_data["student"],
                 answers = self.validated_data["answers"],
                 final_mark = self.validated_data["final_mark"],
