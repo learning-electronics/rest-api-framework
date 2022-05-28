@@ -179,7 +179,7 @@ class AddExamSerializer(serializers.ModelSerializer):
                     newMark.save()
                 else:
                     exam.delete()
-                    return JsonResponse({ 'v': False, 'm': newMark.errors }, safe=False)
+                    raise serializers.ValidationError("Something went wrong with the marks")
 
             exam.save_no_pass()
             return exam

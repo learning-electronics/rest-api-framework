@@ -95,7 +95,7 @@ def get_professor_exam_info_view(request, id):
 #    "classrooms":[class_id1, class_id2, ....],
 #    "public": boolean 
 #    "deduct": decimal(4, 2) between 0 and 100 (is a percentage)
-#    "timer": "02:00"(string)
+#    "timer": "02:00"(string) (HH:mm)
 #    "repeat": boolean
 #} 
 # NOTE: OPTIONAL FIELDS: "classroom"(default= no relation), "public"(default=True), "deduct"(default=0.0), "password"(default=null), "timer"(default=null), "repeat"(default=False)
@@ -113,7 +113,8 @@ def add_exam_view(request):
 
         exam_serializer = AddExamSerializer(data=exam_data)
         if exam_serializer.is_valid():
-            exam = exam_serializer.save(exercises=exam_data["exercises"]) 
+            exam = exam_serializer.save(exercises=exam_data["exercises"])
+
             return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exam_serializer.errors }, safe=False)
