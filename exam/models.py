@@ -1,3 +1,4 @@
+from timeit import repeat
 from django.db import models
 from account.models import Account
 from exercise.models import Exercise
@@ -16,10 +17,11 @@ class Exam(models.Model):
     classrooms  = models.ManyToManyField(Classroom, verbose_name="classrooms", related_name="exam_classrooms", blank=True, default=None)
     students     = models.ManyToManyField(Account, verbose_name="students", related_name="exam_students", blank=True, default=None, through="SubmittedExam")
     date_created= models.DateField(verbose_name="date created", auto_now=True)
-    password    = models.CharField(('password'), max_length=128)
+    password    = models.CharField(('password'), blank=True, null=True, default=None, max_length=128)
     public      = models.BooleanField(verbose_name="public", default=True)
     deduct      = models.DecimalField(verbose_name="deduct", default=0.0, max_digits=4, decimal_places=2, validators=PERCENTAGE_VALIDATOR)
     timer       = models.CharField(max_length=5, verbose_name="timer", default=None, null=True)
+    repeat      = models.BooleanField(verbose_name="repeat", default=False)
 
     # hashes the password and saves the instance
     def save_with_pass(self, *args, **kwargs):

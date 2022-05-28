@@ -1,7 +1,9 @@
+import re
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
 from exam.api.serializers import ProfessorExamSerializer
+from exam.models import Exam
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import JSONParser
@@ -44,7 +46,6 @@ def get_classrooms_view(request):
 @api_view(["GET", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Teacher", "Student"])
-@my_classroom()
 def get_my_classrooms_view(request):
     try:
         if request.user.role == 1:
@@ -64,8 +65,8 @@ def get_my_classrooms_view(request):
 #   "name": <string> class_name,
 #   "teacher": <string> "teacher_id : "teacher__first_name teacher__last_name",
 #   "students": <List<String>> [ "1 : Tiago Marques" ]
-#   "exercises": ExerciseSerializer
-#   "exams": ProfessorExamSerializer
+#   "exercises": ExerciseSerializer ([] if empty)
+#   "exams": ProfessorExamSerializer ([] if empty)
 #   }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -77,7 +78,7 @@ def get_info_classroom_view(request, id):
     try:
         classroom_data = ClassroomSerializer(Classroom.objects.get(id=id)).data
         if request.user.role==2:
-            classroom_data['exams'] = ProfessorExamSerializer(Classroom.objects.get(id=id).exams.all(), many=True).data
+            classroom_data['exams'] = ProfessorExamSerializer(Exam.objects.filter(classrooms__id=id), many=True).data
         return JsonResponse(classroom_data, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
@@ -209,6 +210,23 @@ def exit_classroom_view(request, id):
         classroom = Classroom.objects.get(id=id)
         classroom.students.remove(request.user)
         classroom.save_no_pass()
+
+        return JsonResponse({ 'v': True, 'm': None}, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except BaseException as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+def desassociate_exams_view(request, id):
+    try:
+        data = JSONParser().parse(request)
+        Exam.objects.filter(id__in= data["exams"] ,classroom__id=id).delete()
 
         return JsonResponse({ 'v': True, 'm': None}, safe=False)
     except IntegrityError as e:

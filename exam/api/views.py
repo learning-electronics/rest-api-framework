@@ -16,7 +16,7 @@ from passlib.hash import django_pbkdf2_sha256
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
-# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string}, ... } 
+# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string, "repeat":bool}, ... } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -57,7 +57,7 @@ def get_professor_exams_view(request):
 #        },
 #        ...],
 #    "timer": "02:00"(string),
-#    "number_of_exercises": int,
+#    "repeat": bool
 #    "classrooms": [
 #        {
 #            "classroom_id": "classroom_name"
@@ -95,8 +95,10 @@ def get_professor_exam_info_view(request, id):
 #    "classrooms":[class_id1, class_id2, ....],
 #    "public": boolean 
 #    "deduct": decimal(4, 2) between 0 and 100 (is a percentage)
+#    "timer": "02:00"(string)
+#    "repeat": boolean
 #} 
-# NOTE: OPTIONAL FIELDS: "classroom", "public"(default=True), "deduct"(default=0.0)
+# NOTE: OPTIONAL FIELDS: "classroom"(default= no relation), "public"(default=True), "deduct"(default=0.0), "password"(default=null), "timer"(default=null), "repeat"(default=False)
 # Creates a new exam object
 # If successful returns: { "v": True, "m": <int> exam.id }
 # If unsuccessful returns: { "v": False, "m": Error message }
@@ -155,8 +157,11 @@ def delete_exam_view(request, id):
 #    "classrooms":[id_classroom1, id_classroom2, ...],
 #    "public": boolean
 #    "deduct": decimal(4, 2)
+#    "timer": "02:00"(string)
+#    "repeat": boolean
 #}
 # NOTE: all the fields are optional, if keyword "exercises" is present it must follow the structure above 
+# NOTE: if you want the password to be null/None you must send "password":null
 # If successful returns: { "v": True, "m": None}
 # If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
@@ -206,7 +211,7 @@ def get_classroom_exams_view(request, id):
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Student (user.role==1) can access
-# Receives JSON with the field "pass"
+# Receives JSON with the field "pass" OR if exam has no password no jSON is needed
 # Receives exam id trough URL
 # If successful returns: { 
 #   "id": exam_id,
@@ -232,17 +237,21 @@ def get_classroom_exams_view(request, id):
 @allowed_users(["Student"])
 @my_classroom_exam()
 def student_exam_view(request, id_classroom, id_exam):
-    data = JSONParser().parse(request)
     try:
         exam = Exam.objects.get(id=id_exam)
 
-        # Can't use built in funtcion check_password function to check classroom password
-        # this function is from passlib.hash and checks if the given secret (aka data["password"]) 
-        # is correct using the django store password format <algorithm>$<iterations>$<salt>$<hash>
-        # the default algorithm django uses is PBKDF2_SHA256
-        # if another algorithm is used, opt for other function to verify 
-        if not django_pbkdf2_sha256.verify(data["password"], exam.password):
-            return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
+        if exam.repeat and SubmittedExam.objects.filter(exam_classroom=exam.id, student=request.user.id).exists():
+            return JsonResponse({ 'v': False, 'm': 'You have already submitted this exam' }, safe=False)
+
+        if exam.password != None:
+            data = JSONParser().parse(request)
+            # Can't use built in funtcion check_password function to check classroom password
+            # this function is from passlib.hash and checks if the given secret (aka data["password"]) 
+            # is correct using the django store password format <algorithm>$<iterations>$<salt>$<hash>
+            # the default algorithm django uses is PBKDF2_SHA256
+            # if another algorithm is used, opt for other function to verify 
+            if not django_pbkdf2_sha256.verify(data["password"], exam.password):
+                return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
     
         exam_data = StudentExamSerializer(exam).data
         #adds the mark for the exercise to the serialized exercises
@@ -277,12 +286,14 @@ def student_exam_view(request, id_classroom, id_exam):
 def submit_exam_view(request, id_classroom, id_exam):
     data = JSONParser().parse(request)
     try:
+        if (not Exam.objects.get(id=id_exam).repeat) and SubmittedExam.objects.filter(submitted_exam=id_exam, student=request.user.id).exists():
+            return JsonResponse({ 'v': False, 'm': 'You have already submitted this exam' }, safe=False)
+
         data["submitted_exam"] = id_exam
         data["exam_classroom"] = id_classroom
         data["student"] = request.user.id
         data["exam_token"] = str(request.user.id)+"$$"+str(id)+"&&"+str(datetime.now())
         submited_exam_serializer = AddSubmittedExamSerializer(data=data)
-        print("1")
         if submited_exam_serializer.is_valid():
             submited_exam_serializer.validate(data=data)
             exam = submited_exam_serializer.save()

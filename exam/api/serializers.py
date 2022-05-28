@@ -57,6 +57,7 @@ class ProfessorExamSerializer(serializers.ModelSerializer):
             "date_created",
             "exercises",
             "timer",
+            "repeat",
         ]
 
 # Serializer used to pass the exam trough the rest api to the front with the purpose of the students to see the exam 
@@ -125,9 +126,11 @@ class AddSubmittedExamSerializer(serializers.ModelSerializer):
 
 # Serializers used to create/update exam objects
 class AddExamSerializer(serializers.ModelSerializer):
-    public = serializers.BooleanField(allow_null=True, required=False) 
-    deduct = serializers.DecimalField(allow_null=True, required=False, max_digits=4, decimal_places=2)
-    timer  = serializers.CharField(max_length=5, allow_null=True, required=False)
+    password = serializers.CharField(allow_null=True, required=False)
+    public   = serializers.BooleanField(allow_null=True, required=False) 
+    deduct   = serializers.DecimalField(allow_null=True, required=False, max_digits=4, decimal_places=2)
+    timer    = serializers.CharField(max_length=5, allow_null=True, required=False)
+    repeat   = serializers.BooleanField(allow_null=True, required=False) 
     class Meta: 
         model = Exam
         fields = [ 
@@ -138,6 +141,7 @@ class AddExamSerializer(serializers.ModelSerializer):
                 "public",
                 "deduct",
                 "timer",
+                "repeat",
             ]
         extra_kwargs = { 'password': {"write_only":True} }
 
@@ -145,7 +149,6 @@ class AddExamSerializer(serializers.ModelSerializer):
             exam = Exam(
                     name    = self.validated_data["name"],
                     teacher = self.validated_data["teacher"],
-                    password= self.validated_data["password"]
                 )
 
             if "public" in self.validated_data.keys():
@@ -157,7 +160,15 @@ class AddExamSerializer(serializers.ModelSerializer):
             if "timer" in self.validated_data.keys():
                 exam.timer=self.validated_data["timer"]
 
-            exam.save_with_pass()
+            if "repeat" in self.validated_data.keys():
+                exam.repeat=self.validated_data["repeat"]
+
+            if "password" in self.validated_data:
+                exam.password = self.validated_data["password"]
+                exam.save_with_pass()
+            else:
+                exam.save_no_pass()
+
             if "classrooms" in self.validated_data.keys():
                 exam.classrooms.set(self.validated_data["classrooms"])
 
@@ -206,9 +217,15 @@ class AddExamSerializer(serializers.ModelSerializer):
             instance.deduct=self.validated_data["deduct"]
         if "timer" in self.validated_data.keys():
             instance.timer=self.validated_data["timer"]    
+        if "repeat" in self.validated_data.keys():
+            instance.repeat=self.validated_data["repeat"]
         if "password" in validated_data.keys():
-            instance.password = validated_data.get("password", instance.password)
-            instance.save_with_pass()
+            if self.validated_data["password"] == None:
+                instance.password = None
+                instance.save_no_pass()
+            else:
+                instance.password = validated_data.get("password", instance.password)
+                instance.save_with_pass()
         else:
             instance.save_no_pass()
         return instance
