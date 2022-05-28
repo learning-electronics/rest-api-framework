@@ -16,7 +16,22 @@ from passlib.hash import django_pbkdf2_sha256
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
-# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string, "repeat":bool}, ... } 
+# If sucessfull returns { 
+#    {"id": int , 
+#     "name":"exam_name", 
+#     "public": bool, 
+#     "deduct": decimal(4, 2), 
+#     "date_created": date, 
+#     "number_of_exercises": int, 
+#     "timer": string, 
+#     "repeat":bool}, 
+#     "classrooms": [
+#        {
+#            "classroom_id": "classroom_name"
+#        }, 
+#        ...]
+#     "has_pwd":bool
+#   } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -25,12 +40,14 @@ from passlib.hash import django_pbkdf2_sha256
 @allowed_users(["Teacher"])
 def get_professor_exams_view(request):
     try:
-        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
+        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer', 'repeat'))
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
-        
+
         for exam in exams_data:
             exam["number_of_exercises"] = Marks.objects.filter(exam__id=exam["id"]).count()
+            exam["classrooms"] = [ {'id': classroom.id, 'name': classroom.name} for classroom in Exam.objects.get(id=exam["id"]).classrooms.all()]
+            exam["has_pwd"] = True if  Exam.objects.get(id=exam["id"]).password != None else False
 
         return JsonResponse(exams_data, safe=False)
     except BaseException as e:
@@ -57,24 +74,13 @@ def get_professor_exams_view(request):
 #        },
 #        ...],
 #    "timer": "02:00"(string),
-#    "repeat": bool
-#    "classrooms": [
-#        {
-#            "classroom_id": "classroom_name"
-#        }, 
-#        ...]
-#}  
-# If unsuccessful returns: { "v": False, "m": Error message } 
-@csrf_exempt
-@api_view(["GET", ])
-@permission_classes([IsAuthenticated])
+#    "repeat": boollasses([IsAuthenticated])
 @allowed_users(["Teacher"])
 @ownes_exam()
 def get_professor_exam_info_view(request, id):
     try:
         exam = Exam.objects.get(id=id)
         exam_data = ProfessorExamSerializer(exam).data
-        exam_data["classrooms"] = [ {classroom.id : classroom.name} for classroom in exam.classrooms.all()]
         #adds the mark for the exercise to the serialized exercises
         for mark in Marks.objects.filter(exam=exam.id).values('exercise', 'mark'):
             for exercise in exam_data["exercises"]:
@@ -114,7 +120,6 @@ def add_exam_view(request):
         exam_serializer = AddExamSerializer(data=exam_data)
         if exam_serializer.is_valid():
             exam = exam_serializer.save(exercises=exam_data["exercises"])
-
             return JsonResponse({ 'v': True, 'm': exam.id }, safe=False)
 
         return JsonResponse({ 'v': False, 'm': exam_serializer.errors }, safe=False)
@@ -191,7 +196,7 @@ def update_exam_view(request, id):
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Returns id and name of the exams associated with the classroom that are public (exam.public=1)
-# If sucessfull returns { {"id": int , "name":"exam_name", "teacher's_first_name": "name"}, ... } 
+# If sucessfull returns { {"id": int , "name":"exam_name", "number_of_exercises": int, "has_pwd": boolean}, ... } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -201,7 +206,14 @@ def update_exam_view(request, id):
 @allowed_users(["Student", "Teacher"])
 def get_classroom_exams_view(request, id):
     try:
-        exams_data = list(Exam.objects.filter(classrooms__id=id, public=True).values('id', 'name', 'teacher__first_name'))
+        if request.user.role == 2:
+            exams_data = list(Exam.objects.filter(classrooms__id=id).values('id', 'name'))
+        else:
+            exams_data = list(Exam.objects.filter(classrooms__id=id, public=True).values('id', 'name'))
+        
+        for exam in exams_data:
+            exam["number_of_exercises"] = Marks.objects.filter(exam__id=exam["id"]).count()
+            exam["has_pwd"] = True if  Exam.objects.get(id=exam["id"]).password != None else False
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
 

@@ -163,7 +163,7 @@ class AddExamSerializer(serializers.ModelSerializer):
             if "repeat" in self.validated_data.keys():
                 exam.repeat=self.validated_data["repeat"]
 
-            if "password" in self.validated_data:
+            if "password" in self.validated_data and self.validated_data["password"] != None:
                 exam.password = self.validated_data["password"]
                 exam.save_with_pass()
             else:
