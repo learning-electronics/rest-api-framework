@@ -27,7 +27,7 @@ def get_professor_exams_view(request):
     try:
         exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
         for exam_data in exams_data:
-            exam_data["exercises"] = list(Marks.objects.filter(exam=exam_data["id"]).values('exercise__id'))
+            exam_data["exercises"] = list(Marks.objects.filter(exam=exam_data["id"]).values_list('exercise__id', flat=True))
             
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
