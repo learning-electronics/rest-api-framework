@@ -349,20 +349,18 @@ def upload_data(request):
     reader = csv.reader(csv_file)
     next(reader)
 
-    theme_list = []
+    theme_table = []
     for id_, row in enumerate(reader):
         (
-            id,
             name,
         ) = row
 
-        theme_list.append(
+        theme_table.append(
             Theme(
-                id=id,
                 name=name,
             )
         )
     
-    Theme.objects.bulk_create(theme_list)
+    Theme.objects.bulk_create(theme_table)
 
     return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
