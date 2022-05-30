@@ -16,7 +16,7 @@ from passlib.hash import django_pbkdf2_sha256
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
-# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string, "repeat":bool}, ... } 
+# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string, "repeat":bool, "exercises":[exercise_id, exercise_id,...]}, ... } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -26,6 +26,9 @@ from passlib.hash import django_pbkdf2_sha256
 def get_professor_exams_view(request):
     try:
         exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
+        for exam in Exam.objects.filter(teacher__id=request.user.id):
+            exams_data["exercises"] = list(Marks.objects.filter(exam=exam.id).values('exercise__id'))
+            
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
         
