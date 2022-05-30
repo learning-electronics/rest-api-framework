@@ -16,22 +16,7 @@ from passlib.hash import django_pbkdf2_sha256
 
 # Only authenticated users can access this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
 # Only users who have the role Teacher (user.role==2) can access
-# If sucessfull returns { 
-#    {"id": int , 
-#     "name":"exam_name", 
-#     "public": bool, 
-#     "deduct": decimal(4, 2), 
-#     "date_created": date, 
-#     "number_of_exercises": int, 
-#     "timer": string, 
-#     "repeat":bool}, 
-#     "classrooms": [
-#        {
-#            "classroom_id": "classroom_name"
-#        }, 
-#        ...]
-#     "has_pwd":bool
-#   } 
+# If sucessfull returns { {"id": int , "name":"exam_name", "public": bool, "deduct": decimal(4, 2), "date_created": date, "number_of_exercises": int, "timer": string, "repeat":bool, "exercises":[exercise_id, exercise_id,...]}, ... } 
 # If no exam is associated returns { 'v': True, 'm': 'No exams associated' }
 # If unsuccessful returns: { "v": False, "m": Error message } 
 @csrf_exempt
@@ -40,7 +25,10 @@ from passlib.hash import django_pbkdf2_sha256
 @allowed_users(["Teacher"])
 def get_professor_exams_view(request):
     try:
-        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer', 'repeat'))
+        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
+        for exam_data in exams_data:
+            exam_data["exercises"] = list(Marks.objects.filter(exam=exam_data["id"]).values('exercise__id'))
+            
         if not exams_data:
             return JsonResponse({ 'v': True, 'm': 'No exams associated' }, safe=False)
 

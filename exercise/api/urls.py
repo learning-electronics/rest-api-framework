@@ -12,6 +12,7 @@ from exercise.api.views import(
     add_exercise_solver_view,
     associate_classroom_view,
     desassociate_classroom_view,
+    upload_data,
 )
 
 app_name = "exercise"
@@ -29,4 +30,5 @@ urlpatterns = [
     path("delete_exercise/<int:id>", delete_exercise_view, name="delete_exercise"),
     path("update_exercise/<int:id>", update_exercise_view, name="update_exercise"),
     path("exercises_by_theme/<int:id>", get_exercises_by_theme_view, name="exercises_by_theme"),
+    path("upload_data", upload_data, name="upload_data"),
 ]

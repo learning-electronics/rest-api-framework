@@ -1,8 +1,10 @@
+import csv
+
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
 
-from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes, action
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
@@ -17,6 +19,12 @@ from exercise.api.utils import RULE_CHOICES
 import pickle
 import random, string
 
+from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
+from rest_framework import serializers, viewsets
+from rest_framework.response import Response
+
+fs = FileSystemStorage(location='tmp/')
 
 from os.path import abspath,realpath,dirname,join
 import sys
@@ -323,3 +331,36 @@ def desassociate_classroom_view(request, id):
         return JsonResponse({ 'v': True, 'm': None }, safe=False)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([AllowAny])
+def upload_data(request):
+    file = request.FILES["file"]
+    
+    content = file.read()
+
+    file_content = ContentFile(content)
+    file_name = fs.save("_tmp.csv", file_content)
+    tmp_file = fs.path(file_name)
+
+    csv_file = open(tmp_file, errors="ignore")
+    reader = csv.reader(csv_file)
+    next(reader)
+
+    theme_table = []
+    for id_, row in enumerate(reader):
+        (
+            name,
+        ) = row
+
+        theme_table.append(
+            Theme(
+                name=name,
+            )
+        )
+    
+    Theme.objects.bulk_create(theme_table)
+
+    return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
