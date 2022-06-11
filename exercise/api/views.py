@@ -1,4 +1,5 @@
 import csv
+import re
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
@@ -21,8 +22,6 @@ import random, string
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
-from rest_framework import serializers, viewsets
-from rest_framework.response import Response
 
 fs = FileSystemStorage(location='tmp/')
 
@@ -32,6 +31,9 @@ import os
 project_path = dirname(dirname(dirname(dirname(realpath(__file__)))))
 sys.path += [join(project_path,'CircuitSolver/preprocessor/')]
 from mytopcaller import handler
+
+from exercise.api.utils import get_exercise_dict, convert_xmf_to_png
+import shutil
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -67,6 +69,53 @@ def add_exercise_view(request):
     except ValidationError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@parser_classes([MultiPartParser, FormParser,])
+def add_exercise_doc_view(request):
+    try:
+        doc_file = request.FILES['file']
+        extension = doc_file.name.split('.')[-1]
+        doc_file.name = str(request.user.id) + "_" + ''.join(random.choice(string.ascii_lowercase) for i in range(5)) + "." + extension
+        file_path = default_storage.save(doc_file.name, doc_file)
+        #convert_xmf_to_png(project_path+"/rest-api-framework/api/media/"+file_path.split('.')[0]+"_media/")
+        error_string=''
+        for exercise_dict in get_exercise_dict("/api/media/"+file_path):
+            exercise_dict["teacher"] = request.user.id
+            exercise_dict["unit"] = 'None'
+            exercise_dict["theme"] = [1]
+            img_name = exercise_dict.pop('img', None) 
+            if request.data.get('public') is not None:
+                exercise_dict["public"] = request.data.get('public')
+            exercise_serializer = ExerciseSerializer(data=exercise_dict) 
+            if exercise_serializer.is_valid():
+                ex = exercise_serializer.save()
+                if img_name is not None:
+                    img_path = str(ex.id) + "." + img_name.split('.')[-1]
+
+                    if not os.path.exists(project_path+"/rest-api-framework/api/media/exercises"):
+                        os.makedirs(project_path+"/rest-api-framework/api/media/exercises")
+
+                    shutil.copy(project_path+"/rest-api-framework/api/media/"+file_path.split('.')[0]+"_media/"+img_name.split('/')[-1] , project_path+"/rest-api-framework/api/media/exercises/"+img_path)
+                    ex.img = project_path+"/rest-api-framework/api/media/exercises/"+img_path
+                    ex.save()
+            else:
+                print(exercise_dict)
+                
+        #delete temporary files (with are no longer needed)
+        shutil.rmtree(project_path+"/rest-api-framework/api/media/"+file_path.split('.')[0]+"_media/")
+        default_storage.delete(file_path)
+        
+        return JsonResponse({ 'v': True, 'm': None }, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
 @csrf_exempt
