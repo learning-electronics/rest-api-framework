@@ -25,7 +25,7 @@ from passlib.hash import django_pbkdf2_sha256
 @allowed_users(["Teacher"])
 def get_professor_exams_view(request):
     try:
-        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer'))
+        exams_data = list(Exam.objects.filter(teacher__id=request.user.id).values('id', 'name', 'public', 'deduct', 'date_created', 'timer', 'repeat'))
         for exam_data in exams_data:
             exam_data["exercises"] = list(Marks.objects.filter(exam=exam_data["id"]).values_list('exercise__id', flat=True))
             
