@@ -508,3 +508,51 @@ def upload_data(request):
     Theme.objects.bulk_create(theme_table)
 
     return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users("Teacher")
+def upload_exercises_data(request):
+    file = request.FILES["file"]
+    
+    content = file.read()
+
+    file_content = ContentFile(content)
+    file_name = fs.save("_tmp.csv", file_content)
+    tmp_file = fs.path(file_name)
+
+    csv_file = open(tmp_file, errors="ignore")
+    reader = csv.reader(csv_file)
+    next(reader)
+
+    excercises_table = []
+    for id_, row in enumerate(reader):
+        (
+            theme,
+            question,
+            img,
+            ans1,
+            ans2,
+            ans3,
+            correct,
+            unit,
+        ) = row
+
+        excercises_table.append(
+            Exercise(
+                teacher=request.user.id,
+                theme=theme,
+                question=question,
+                img=project_path + img,
+                ans1=ans1,
+                ans2=ans2,
+                ans3=ans3,
+                correct=correct,
+                unit=unit
+            )
+        )
+    
+    Exercise.objects.bulk_create(excercises_table)
+
+    return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
