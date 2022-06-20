@@ -233,7 +233,7 @@ def get_classroom_exams_view(request, id):
 # }
 # If unsuccessful returns: { "v": False, "m": Error message }
 @csrf_exempt
-@api_view(["GET", ])
+@api_view(["POST", ])
 @permission_classes([IsAuthenticated])
 @allowed_users(["Student"])
 @my_classroom_exam()

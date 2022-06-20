@@ -70,6 +70,7 @@ class StudentExamSerializer(serializers.ModelSerializer):
             "name",
             "exercises",
             "timer",
+            "deduct",
         ]
 
 #Serializers used to create/update relation between an exam and an exercise
