@@ -207,7 +207,7 @@ def add_exercise_solver_iterations_view(request, iterations):
         problem_counter = 0
 	
 	#limit iterations to 200
-	iterations = iterations if iterations<=200 else 200
+        iterations = iterations if iterations<=200 else 200
         for i in range(1, iterations):
             altered_string_index = random.randint(3,index_EOF-1)
             altered_string = generated_content[altered_string_index]
