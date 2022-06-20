@@ -10,6 +10,7 @@ from exercise.api.views import(
     get_my_exercises_view,
     get_exercises_by_theme_view,
     add_exercise_solver_view,
+    add_exercise_solver_iterations_view,
     add_exercise_doc_view,
     associate_classroom_view,
     desassociate_classroom_view,
@@ -21,6 +22,7 @@ app_name = "exercise"
 urlpatterns = [
     path("add_exercise", add_exercise_view, name="add_exercise"),
     path("add_exercise_solver", add_exercise_solver_view, name="add_exercise_solver"),
+    path("add_exercise_solver_iterations/<int:iterations>", add_exercise_solver_iterations_view, name="add_exercise_solver_iterations"),
     path("add_exercise_doc", add_exercise_doc_view, name="add_exercise_doc"),
     path("associate_classroom/<int:id>", associate_classroom_view, name="associate_with_classroom"),
     path("desassociate_classroom/<int:id>", desassociate_classroom_view, name="desassociate_with_classroom"),  

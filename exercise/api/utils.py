@@ -93,7 +93,7 @@ def get_exercise_dict(path_to_file,):
 
     os.remove(project_path + path_to_file)
     return exercises_data
-                
+
 #Convert .xmf images to .png
 def convert_xmf_to_png(folder_path):
     for file in os.listdir(folder_path):
