@@ -1,39 +1,39 @@
-import csv
-import re
-
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
+from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage
+from django.core.files.base import ContentFile
 
 from rest_framework.decorators import api_view, permission_classes, parser_classes, action
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import ValidationError
+
 from account.api.decorators import allowed_users, ownes_exercise
-
 from exercise.models import Exercise, Theme
-from classroom.models import Classroom
 from exercise.api.serializers import ExerciseSerializer, ThemeSerializer
-from django.core.files.storage import default_storage
 from exercise.api.utils import RULE_CHOICES
+from exercise.api.utils import get_exercise_dict, convert_xmf_to_png
+from classroom.models import Classroom
 
+from os.path import abspath,realpath,dirname,join
+import os
+import sys
 import pickle
 import random, string
+import shutil
+import re
+import copy
+import csv
 
-from django.core.files.base import ContentFile
-from django.core.files.storage import FileSystemStorage
 
 fs = FileSystemStorage(location='tmp/')
 
-from os.path import abspath,realpath,dirname,join
-import sys
-import os
 project_path = dirname(dirname(dirname(dirname(realpath(__file__)))))
 sys.path += [join(project_path,'CircuitSolver/preprocessor/')]
 from mytopcaller import handler
 
-from exercise.api.utils import get_exercise_dict, convert_xmf_to_png
-import shutil
 
 
 # Only authenticated teachers can acess this view aka in HTTP header add "Authorization": "Bearer " + generated_auth_token
@@ -154,6 +154,101 @@ def add_exercise_solver_view(request):
             return JsonResponse({ 'v': True, 'm': ex.id }, safe=False)
         
         return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
+    except IntegrityError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+    except KeyError as e:
+        return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users(["Teacher"])
+@parser_classes([MultiPartParser, FormParser,])
+def add_exercise_solver_iterations_view(request, iterations):
+    try:
+        cir_file = request.FILES['cirpath']
+        cir_file.name = str(request.user.id) + "_" + ''.join(random.choice(string.ascii_lowercase) for i in range(5))
+        file_path = default_storage.save(cir_file.name, cir_file)
+
+        id_list=[]
+
+        #get content of file
+        file_content = []
+        with open("api/media/" + file_path) as f:
+            file_content += f.read().splitlines()
+
+        ex = handler("api/media/" + file_path, 
+            request.user.id, 
+            [int(i) for i in request.data.get("theme").replace("[","").replace("]","").split(",")], 
+            request.data.get("question"), 
+            request.data.get("public"), 
+            request.data.get("target"), 
+            request.data.get("freq"), 
+            request.data.get("unit") if request.data.get("unit")!=None else None )
+
+        #default_storage.delete(cir_file.name)
+        exercise_serializer = ExerciseSerializer(data=ex)
+        if exercise_serializer.is_valid():
+            ex = exercise_serializer.save()
+            id_list+=[ex.id]
+
+            if request.data.get("public") == 'false' and 'visible' in request.data:
+                for class_id in [int(i) for i in request.data.get("visible").split(",")]:
+                    if request.user == Classroom.objects.get(id=class_id).teacher:
+                        Classroom.objects.get(id=class_id).exercises.add(ex.id)
+                    else:
+                        # This error should never happen from the frontend
+                        raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+        else:
+            return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
+
+        index_EOF = file_content.index(".END")
+        generated_content = copy.deepcopy(file_content)
+        problem_counter = 0
+        for i in range(1, iterations):
+            altered_string_index = random.randint(3,index_EOF-1)
+            altered_string = generated_content[altered_string_index]
+            for j,c in enumerate(altered_string.split(" ")[-1]):
+                if not c.isdigit() and c!=".":
+                    break
+            number = altered_string.split(" ")[-1][:j]
+            unit = altered_string.split(" ")[-1][j:].lstrip()
+            generated_content[altered_string_index] = altered_string.replace(altered_string.split(" ")[-1], str(round(float(number)*random.uniform(0.75, 1.5), 2))+unit)
+
+            f = open("api/media/" +file_path, "w")
+            for line in generated_content:
+                f.write(line + "\n")
+            f.close()
+
+            ex = handler("api/media/" + file_path, 
+            request.user.id, 
+            [int(i) for i in request.data.get("theme").replace("[","").replace("]","").split(",")], 
+            request.data.get("question"), 
+            request.data.get("public"), 
+            request.data.get("target"), 
+            request.data.get("freq"), 
+            request.data.get("unit") if request.data.get("unit")!=None else None )
+
+            exercise_serializer = ExerciseSerializer(data=ex)
+            if exercise_serializer.is_valid():
+                ex = exercise_serializer.save()
+                id_list+=[ex.id]
+                if request.data.get("public") == 'false' and 'visible' in request.data:
+                    for class_id in [int(i) for i in request.data.get("visible").split(",")]:
+                        if request.user == Classroom.objects.get(id=class_id).teacher:
+                            Classroom.objects.get(id=class_id).exercises.add(ex.id)
+                        else:
+                            # This error should never happen from the frontend
+                            raise ValidationError("You are not the teacher of the classroom " + str(class_id))
+            else:
+                problem_counter+=1
+            generated_content = copy.deepcopy(generated_content)
+            
+
+        default_storage.delete(cir_file.name)
+                        
+        return JsonResponse({ 'v': True, 'm': {'ids': id_list, 'counter': problem_counter}}, safe=False)    
+        #return JsonResponse({ 'v': False, 'm': exercise_serializer.errors }, safe=False)
     except IntegrityError as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
     except KeyError as e:
@@ -411,5 +506,53 @@ def upload_data(request):
         )
     
     Theme.objects.bulk_create(theme_table)
+
+    return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
+
+@csrf_exempt
+@api_view(["POST", ])
+@permission_classes([IsAuthenticated])
+@allowed_users("Teacher")
+def upload_exercises_data(request):
+    file = request.FILES["file"]
+    
+    content = file.read()
+
+    file_content = ContentFile(content)
+    file_name = fs.save("_tmp.csv", file_content)
+    tmp_file = fs.path(file_name)
+
+    csv_file = open(tmp_file, errors="ignore")
+    reader = csv.reader(csv_file)
+    next(reader)
+
+    excercises_table = []
+    for id_, row in enumerate(reader):
+        (
+            theme,
+            question,
+            img,
+            ans1,
+            ans2,
+            ans3,
+            correct,
+            unit,
+        ) = row
+
+        excercises_table.append(
+            Exercise(
+                teacher=request.user.id,
+                theme=theme,
+                question=question,
+                img=project_path + img,
+                ans1=ans1,
+                ans2=ans2,
+                ans3=ans3,
+                correct=correct,
+                unit=unit
+            )
+        )
+    
+    Exercise.objects.bulk_create(excercises_table)
 
     return JsonResponse({ 'v': True, 'm': "Successfully uploaded the data" }, safe=False)
