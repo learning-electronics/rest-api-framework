@@ -341,7 +341,12 @@ def get_exam_final_marks_view(request, id):
 #    {
 #        "student": "student.id student.first_name student.last_name",
 #        "final_mark": "decimal(4,2)"
-#        "exam_id": "classroom_id classroom_name",
+#        "exam_id": exam_id,
+#        "exam_name": exam_name,
+#        "answers": { ex_id: str(answer),
+#                     ...                   
+#                   },
+#        "date_submitted": date
 #    },
 #    ...]
 # If no student submitted the exam returns empty list
@@ -353,12 +358,15 @@ def get_exam_final_marks_view(request, id):
 @my_classroom()
 def get_classroom_exams_final_marks_view(request, id):
     try:
-        lst=[]
-        for object in SubmittedExam.objects.filter(exam_classroom_id=id).values('student', 'final_mark', 'submitted_exam'):
+        lst = []
+        for object in SubmittedExam.objects.filter(exam_classroom_id=id).values('student', 'final_mark', 'submitted_exam', 'answers', 'date_submitted'):
             lst.append({ 
-                "student": str(object["student"])+" "+str(Account.objects.get(id=object["student"]).first_name)+" "+str(Account.objects.get(id=object["student"]).last_name),
+                "student": str(Account.objects.get(id=object["student"]).first_name) + " " + str(Account.objects.get(id=object["student"]).last_name),
                 "final_mark": object['final_mark'],
-                "exam_id": str(object['submitted_exam'])+" "+str(Exam.objects.get(id=object['submitted_exam']).name)
+                "answers": object['answers'],
+                "exam_id": object['submitted_exam'],
+                "exam_name": Exam.objects.get(id=object['submitted_exam']).name,
+                "date_submitted": object['date_submitted']
             })
         return JsonResponse(lst, safe=False)
     except BaseException as e:
