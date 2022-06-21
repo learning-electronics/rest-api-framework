@@ -87,7 +87,7 @@ def add_exercise_doc_view(request):
         for exercise_dict in get_exercise_dict("/api/media/"+file_path):
             exercise_dict["teacher"] = request.user.id
             exercise_dict["unit"] = 'None'
-            exercise_dict["theme"] = [1]
+            exercise_dict["theme"] = [5]
             img_name = exercise_dict.pop('img', None) 
             if request.data.get('public') is not None:
                 exercise_dict["public"] = request.data.get('public')
@@ -101,10 +101,11 @@ def add_exercise_doc_view(request):
                         os.makedirs(project_path+"/rest-api-framework/api/media/exercises")
 
                     shutil.copy(project_path+"/rest-api-framework/api/media/"+file_path.split('.')[0]+"_media/"+img_name.split('/')[-1] , project_path+"/rest-api-framework/api/media/exercises/"+img_path)
-                    ex.img = project_path+"/rest-api-framework/api/media/exercises/"+img_path
+                    ex.img = 'exercises/' + img_path
                     ex.save()
             else:
-                print(exercise_dict)
+                print(exercise_serializer.errors)
+                #print(exercise_dict)
                 
         #delete temporary files (with are no longer needed)
         shutil.rmtree(project_path+"/rest-api-framework/api/media/"+file_path.split('.')[0]+"_media/")
@@ -371,6 +372,8 @@ def get_my_exercises_view(request):
 def delete_exercise_view(request, id):
     try:
         Exercise.objects.filter(id=id).delete()
+        file_name = "exercises/" + str(id) + '.png'
+        default_storage.delete(file_name)
     except BaseException as e:
         return JsonResponse({ 'v': False, 'm': str(e) }, safe=False)
 
