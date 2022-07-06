@@ -7,7 +7,7 @@ django-utils-six==2.0
 djangorestframework==3.13.1
 docx2python==2.0.4
 docx2txt==0.8
-lxml==4.9.0
+lxml==4.9.1
 mpmath==1.2.1
 numpy==1.22.3
 passlib==1.7.4
