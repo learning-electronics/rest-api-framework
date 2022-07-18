@@ -6,8 +6,7 @@ from ..api.tokens import account_activation_token, account_deactivation_token, r
 
 
 def registration_code(current_site, account):
-    return '''<!DOCTYPE html>
-            <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+    return '''<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
             <head>
                 <meta charset="utf-8"> <!-- utf-8 works for most cases -->
                 <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
@@ -140,8 +139,8 @@ def registration_code(current_site, account):
                     }
                     .button-td-primary:hover,
                     .button-a-primary:hover {
-                        background: #555555 !important;
-                        border-color: #555555 !important;
+                        background: #4f6f20 !important;
+                        border-color: #4f6f20 !important;
                     }
 
                     /* Media Queries */
@@ -227,7 +226,7 @@ def registration_code(current_site, account):
                             <!-- Email Header : BEGIN -->
                             <tr>
                                 <td style="padding: 20px 0; text-align: center">
-                                    <img src="https://via.placeholder.com/200x50" width="200" height="50" alt="alt_text" border="0" style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
+                                    <img src="https://i.imgur.com/oPBoFo9.png" width="200" height="50" alt="alt_text" border="0" style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
                                 </td>
                             </tr>
                             <!-- Email Header : END -->
@@ -235,7 +234,7 @@ def registration_code(current_site, account):
                             <!-- Hero Image, Flush : BEGIN -->
                             <tr>
                                 <td style="background-color: #ffffff;">
-                                    <img src="https://via.placeholder.com/1360x600" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
+                                    <img src="https://i.imgur.com/B6l1w4w.png" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
                                 </td>
                             </tr>
                             <!-- Hero Image, Flush : END -->
@@ -247,11 +246,14 @@ def registration_code(current_site, account):
                                         <tr>
                                             <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                                                 <h1 style="margin: 0 0 10px; font-size: 25px; line-height: 30px; color: #333333; font-weight: normal;">Olá ''' + account.first_name + ''',</h1>
-                                                <p style="margin: 0 0 10px;">Obrigado por te registares na nossa plataforma! Aqui poderás ...</p>
+                                                <p style="margin: 0 0 10px;">Obrigado por te registares na nossa plataforma!</p>
+												<p style="margin: 0 0 10px;">No Learning-Electronics poderás: </p>
                                                 <ul style="padding: 0; margin: 0; list-style-type: disc;">
-                                                    <li style="margin:0 0 10px 30px;" class="list-item-first">A list item.</li>
-                                                    <li style="margin:0 0 10px 30px;">Another list item here.</li>
-                                                    <li style="margin: 0 0 0 30px;" class="list-item-last">Everyone gets a list item, list items for everyone!</li>
+                                                    <li style="margin:0 0 10px 30px;" class="list-item-first">Consultar uma biblioteca de exercícios.</li>
+                                                    <li style="margin:0 0 10px 30px;">Realizar testes autopropostos.</li>
+													<li style="margin:0 0 10px 30px;">Jogar contra outros utilizadores.</li>
+													<li style="margin:0 0 10px 30px;">Aderir a uma turma.</li>
+                                                    <li style="margin: 0 0 0 30px;" class="list-item-last">Ver o teu progresso com estatísticas</li>
                                                 </ul>
                                             </td>
                                         </tr>
@@ -260,13 +262,13 @@ def registration_code(current_site, account):
                                                 <!-- Button : BEGIN -->
                                                 <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
                                                     <tr>
-                                                        <td class="button-td button-td-primary" style="border-radius: 4px; background: #222222;">
-                                                            <a class="button-a button-a-primary" style="background: #222222; border: 1px solid #000000; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px;" 
+                                                        <td class="button-td button-td-primary" style="border-radius: 4px; background: #709f2b;">
+                                                            <a class="button-a button-a-primary" style="background: #709f2b; border: 1px solid #709f2b; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px;" 
                                                             href="''' + render_to_string('url.html', {    
                                                             'domain': current_site.domain,  
                                                             'uid': urlsafe_base64_encode(force_bytes(account.pk)),  
                                                             'token': account_activation_token.make_token(account),  
-                                                        }) + '''">Verifica o teu E-mail</a>
+                                                        }) + '''">Verificar E-mail</a>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -294,12 +296,12 @@ def registration_code(current_site, account):
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px; text-align: left;">
                                                         <tr>
                                                             <td>
-                                                                <img src="https://via.placeholder.com/310" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
+                                                                <img src="https://i.imgur.com/nMi6pv6.png" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td style="font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555; padding-top: 10px;" class="stack-column-center">
-                                                                <p style="margin: 0;">Example text</p>
+                                                                <p style="margin: 0;">Estatísticas pessoais</p>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -318,12 +320,12 @@ def registration_code(current_site, account):
                                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="font-size: 14px;text-align: left;">
                                                         <tr>
                                                             <td>
-                                                                <img src="https://via.placeholder.com/310" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
+                                                                <img src="https://i.imgur.com/qydIUBz.png" width="310" height="" border="0" alt="alt_text" style="width: 100%; max-width: 310px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;" class="center-on-narrow">
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td style="font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555; padding-top: 10px;" class="stack-column-center">
-                                                                <p style="margin: 0;">Example text</p>
+                                                                <p style="margin: 0;">Teste autopropostos de escolha múltipla</p>
                                                             </td>
                                                         </tr>
                                                     </table>
@@ -382,7 +384,7 @@ def registration_code(current_site, account):
                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                         <tr>
                                             <td style="padding: 20px; text-align: left; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #ffffff;">
-                                                <p style="margin: 0;">Example text.</p>
+                                                <p style="margin: 0;">Learning-Electronics, Universidade de Aveiro e Instituto de Telecomunicações © 2022.</p>
                                             </td>
                                         </tr>
                                     </table>
@@ -541,8 +543,8 @@ def delete_code(current_site, account):
                     }
                     .button-td-primary:hover,
                     .button-a-primary:hover {
-                        background: #555555 !important;
-                        border-color: #555555 !important;
+                        background: #902b2a !important;
+                        border-color: #902b2a !important;
                     }
 
                     /* Media Queries */
@@ -628,7 +630,7 @@ def delete_code(current_site, account):
                             <!-- Email Header : BEGIN -->
                             <tr>
                                 <td style="padding: 20px 0; text-align: center">
-                                    <img src="https://via.placeholder.com/200x50" width="200" height="50" alt="alt_text" border="0" style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
+                                    <img src="https://i.imgur.com/oPBoFo9.png" width="200" height="50" alt="alt_text" border="0" style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
                                 </td>
                             </tr>
                             <!-- Email Header : END -->
@@ -636,7 +638,7 @@ def delete_code(current_site, account):
                             <!-- Hero Image, Flush : BEGIN -->
                             <tr>
                                 <td style="background-color: #ffffff;">
-                                    <img src="https://via.placeholder.com/1360x600" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
+                                    <img src="https://i.imgur.com/ZKVNRbJ.png" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
                                 </td>
                             </tr>
                             <!-- Hero Image, Flush : END -->
@@ -648,12 +650,7 @@ def delete_code(current_site, account):
                                         <tr>
                                             <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                                                 <h1 style="margin: 0 0 10px; font-size: 25px; line-height: 30px; color: #333333; font-weight: normal;">Estamos tristes por te ver partir ''' + account.first_name + '''</h1>
-                                                <p style="margin: 0 0 10px;">Obrigado por te registares na nossa plataforma! Aqui poderás ...</p>
-                                                <ul style="padding: 0; margin: 0; list-style-type: disc;">
-                                                    <li style="margin:0 0 10px 30px;" class="list-item-first">A list item.</li>
-                                                    <li style="margin:0 0 10px 30px;">Another list item here.</li>
-                                                    <li style="margin: 0 0 0 30px;" class="list-item-last">Everyone gets a list item, list items for everyone!</li>
-                                                </ul>
+                                                <p style="margin: 0 0 10px;">Tens a certeza que queres desativar a tua conta?</p>
                                             </td>
                                         </tr>
                                         <tr>
@@ -661,13 +658,13 @@ def delete_code(current_site, account):
                                                 <!-- Button : BEGIN -->
                                                 <table align="center" role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: auto;">
                                                     <tr>
-                                                        <td class="button-td button-td-primary" style="border-radius: 4px; background: #222222;">
-                                                            <a class="button-a button-a-primary" style="background: #222222; border: 1px solid #000000; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px;" 
+                                                        <td class="button-td button-td-primary" style="border-radius: 4px; background: #fe4a49;">
+                                                            <a class="button-a button-a-primary" style="background: #fe4a49; border: 1px solid #fe4a49; font-family: sans-serif; font-size: 15px; line-height: 15px; text-decoration: none; padding: 13px 17px; color: #ffffff; display: block; border-radius: 4px;" 
                                                             href="''' + render_to_string('url_deactivate.html', {    
                                                             'domain': current_site.domain,  
                                                             'uid': urlsafe_base64_encode(force_bytes(account.pk)),  
                                                             'token': account_deactivation_token.make_token(account),  
-                                                        }) + '''">Eliminar conta</a>
+                                                        }) + '''">Desativar conta</a>
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -722,7 +719,7 @@ def delete_code(current_site, account):
                                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                         <tr>
                                             <td style="padding: 20px; text-align: left; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #ffffff;">
-                                                <p style="margin: 0;">Example text.</p>
+                                                <p style="margin: 0;">Learning-Electronics, Universidade de Aveiro e Instituto de Telecomunicações © 2022..</p>
                                             </td>
                                         </tr>
                                     </table>

@@ -22,6 +22,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
                     last_name = self.validated_data["last_name"],
                     birth_date = self.validated_data["birth_date"],
                     role = self.validated_data["role"],
+                    is_active = True,
                 )
         
         password = self.validated_data['password']

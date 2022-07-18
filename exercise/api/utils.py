@@ -14,7 +14,7 @@ RULE_CHOICES = ( ("A", "Ampere"), ("V", "Volt"), ("W", "Watt"), ("Ohm", "Ohm"), 
 def get_exercise_dict(path_to_file,):
     #"20211124_BD_de_Exercicios_DC.doc"
     if path_to_file.endswith(".doc"):
-        subprocess.call(['soffice', '--headless', '--convert-to', 'docx', '--outdir', project_path+"/api/media/", project_path+path_to_file])
+        subprocess.call(['soffice', '--headless', '--convert-to', 'docx', '--outdir', project_path+"/api/media/", project_path+path_to_file], shell=True)
         path_to_file = path_to_file.replace(".doc", ".docx")
 
     raw_data = []

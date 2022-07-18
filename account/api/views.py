@@ -1,3 +1,6 @@
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db import IntegrityError
@@ -21,7 +24,7 @@ from account.api.serializers import RegistrationSerializer
 from account.models import Account
 from account.api.utils import *
 from django.core.files.storage import default_storage
-from django.core.validators import validate_email
+import ssl
 
 
 # Everyone can acess this view
@@ -44,18 +47,22 @@ def registration_view(request):
             
             data['v'] = True
             data['m'] = None
+            
             # data["token"] = Token.objects.get_or_create(user=account)[0].key
             # data["expired"], data["token"] = token_expire_handler(data["token"])
-
             current_site = get_current_site(request)  
-
-            subject, from_email, to = 'Ativação de conta no Learning-Electronics', settings.EMAIL_HOST_USER, account.email
-            text_content = 'This is an important message.'
             html_content = registration_code(current_site, account)
+            
+            msg = MIMEMultipart()
+            msg['Subject'] = "Ativação de conta no Learning Electronics"
+            msg.attach(MIMEText(html_content, "html"))
 
-            msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
+            SSLcontext = ssl.create_default_context()
+
+            with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
+                server.starttls(context=SSLcontext)
+                server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+                server.sendmail(settings.EMAIL_HOST_USER, account.email, msg.as_string())
         else:
             data['v'] = False
             data['m'] = account_serializer.errors
@@ -220,14 +227,18 @@ def delete_view(request):
         return JsonResponse({ 'v': False, 'm': "Incorrect Credentials" }, safe=False)
 
     current_site = get_current_site(request)  
-
-    subject, from_email, to = 'Desativação de conta no Learning-Electronics', settings.EMAIL_HOST_USER, account.email
-    text_content = 'This is an important message.'
     html_content = delete_code(current_site, account)
+    
+    msg = MIMEMultipart()
+    msg['Subject'] = "Desativação de conta no Learning Electronics"
+    msg.attach(MIMEText(html_content, "html"))
 
-    msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
-    msg.attach_alternative(html_content, "text/html")
-    msg.send()
+    SSLcontext = ssl.create_default_context()
+
+    with smtplib.SMTP("smtp-mail.outlook.com", 587) as server:
+        server.starttls(context=SSLcontext)
+        server.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+        server.sendmail(settings.EMAIL_HOST_USER, account.email, msg.as_string())
 
     return JsonResponse({ 'v': True, 'm': None}, safe=False)
 
