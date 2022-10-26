@@ -64,6 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'api.urls'
@@ -88,6 +89,10 @@ WSGI_APPLICATION = 'api.wsgi.application'
 
 # Authentication Definitions
 CORS_ORIGIN_ALLOW_ALL = True
+import dj_database_url
+prod_db=dj_database_url.config(conn_max_age=500)
+DATABASES['default'].update(prod_db)
+
 AUTH_USER_MODEL = 'account.Account'
 # TOKEN_EXPIRED_AFTER_SECONDS = 7200
 
