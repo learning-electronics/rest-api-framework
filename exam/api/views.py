@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from account.api.decorators import allowed_users, my_classroom, ownes_exam, my_classroom_exam
 
 from account.models import Account
-from exam.models import Exam, Marks, SubmittedExam
+from exam.models import Exam, Marks, SubmittedExam, Exercise
 from exam.api.serializers import AddExamSerializer, StudentExamSerializer, ProfessorExamSerializer, AddSubmittedExamSerializer
 from passlib.hash import django_pbkdf2_sha256
 
@@ -365,6 +365,7 @@ def get_classroom_exams_final_marks_view(request, id):
                 "final_mark": object['final_mark'],
                 "answers": object['answers'],
                 "exam_id": object['submitted_exam'],
+                'exercises': (StudentExamSerializer(Exam.objects.get(id=object["submitted_exam"])).data)["exercises"],
                 "exam_name": Exam.objects.get(id=object['submitted_exam']).name,
                 "date_submitted": object['date_submitted']
             })
